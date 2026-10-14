@@ -36,6 +36,10 @@ python3 engine/build_twine.py "scenario/The Commons' Comma – Response Matrix.x
 
 Checks run in order: game text vs. framework export, engine text keys, matrix vs. Facts and itself, packet vs. matrix; then Twee, Tweego, assets. It fails loudly: fix the source, don't loosen a check. Without `--framework` the framework check is skipped with a warning.
 
+## Pull requests
+
+Push every commit as soon as it is made, and keep every pushed branch in an open pull request against `main`. Open it with the first push, following `.github/pull_request_template.md` (summary, questions for the author, follow-up needed to activate the work); when later commits change the picture, update its description. Keep the template consistent with the one in HolyTispoon/Ethics-Sandbox-Virtual-Tabletop: the shared sections are word for word the same, and that repo adds a build-plan pointer and a Checks list.
+
 ## Gotchas
 
 - Don't run the docx skill's `merge_runs.py` on the packet (it once turned "=" into "."). Edit the packet's XML directly.
