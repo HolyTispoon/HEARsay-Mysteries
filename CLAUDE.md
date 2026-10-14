@@ -50,3 +50,5 @@ History/undo disabled so tripwires stick; follow-up bonus 1 point; ranking 1 per
 ## Working with the user
 
 Direct, factual, no flattery; criticism welcome.
+
+Name each branch for the work it contains (for example `claude/add-site-icon`), not with a generated name, and start it from `main`; this is explicit permission to push to that branch instead of an assigned one.
