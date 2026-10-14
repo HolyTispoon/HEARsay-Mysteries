@@ -23,7 +23,8 @@ Steps:
   4. Writes the scenario and the game text into the engine as `setup.scenario` and `setup.gameText`,
      and checks that every text the engine asks for is in the game text workbook.
   5. Writes OUT_DIR/source/story.twee (Twee 3) and compiles it with Tweego into OUT_DIR/index.html.
-  6. Copies the witness portraits and campus map into OUT_DIR/assets/.
+  6. Copies the witness portraits, the campus map and the site icons (ICONS) into OUT_DIR/assets/; head.html
+     links the icons from the page's <head>.
   With --repo it also copies the engine, the game text, the matrix, the packet and a README into OUT_DIR,
   so OUT_DIR is a complete, self-contained GitHub repository (GitHub Pages serves index.html).
 Every check stops the build and lists each problem.
@@ -43,6 +44,9 @@ from game_text import read_game_text, DEFAULT as GAME_TEXT
 from check_framework import check as check_framework, find_export
 
 ENGINE = os.path.join(HERE, "hearsay_engine.twee")
+# Appended to the <head> of index.html; it links the site icons, which are the same for every scenario
+HEAD = os.path.join(HERE, "head.html")
+ICONS = ("favicon.svg", "favicon-32.png", "apple-touch-icon.png")
 # Text keys the engine builds at run time rather than naming outright
 DYNAMIC_KEYS = re.compile(r"^(rules\.\d+|hear\.[HEAR]\.(move|text)|result\.\w+|ending\.verdict\.\w+)$")
 
@@ -201,6 +205,8 @@ def main():
     for w in d.WITNESSES:
         copy(find_file(a.assets, w["portrait"]), os.path.join(out, "assets", "portraits", w["portrait"]))
     copy(find_file(a.assets, d.MAP), os.path.join(out, "assets", d.MAP))
+    for fn in ICONS:
+        copy(os.path.join(HERE, fn), os.path.join(out, "assets", fn))
 
     # twee
     data = json.dumps(scenario_json(d), ensure_ascii=False).replace("</", "<\\/")
@@ -226,7 +232,7 @@ def main():
     tweego = os.environ.get("TWEEGO") or shutil.which("tweego")
     if not tweego:
         sys.exit(f"Wrote {twee_path}, but Tweego was not found. Install it or set TWEEGO=/path/to/tweego, then rerun.")
-    r = subprocess.run([tweego, "-f", "sugarcube-2", "-o", os.path.join(out, "index.html"), twee_path],
+    r = subprocess.run([tweego, "-f", "sugarcube-2", "--head", HEAD, "-o", os.path.join(out, "index.html"), twee_path],
                        capture_output=True, text=True)
     if r.returncode != 0:
         sys.exit("Tweego failed:\n" + r.stderr)
@@ -235,7 +241,7 @@ def main():
 
     if a.repo:
         for fn in ("hearsay_engine.twee", "build_twine.py", "scenario_matrix.py", "check_packet.py",
-                   "game_text.py", "check_framework.py", os.path.basename(GAME_TEXT)):
+                   "game_text.py", "check_framework.py", "head.html", *ICONS, os.path.basename(GAME_TEXT)):
             copy(os.path.join(HERE, fn), os.path.join(out, "engine", fn))
         scen_out = os.path.join(out, "scenario")
         keep = {os.path.basename(a.matrix)} | ({os.path.basename(packet)} if packet else set())

@@ -25,6 +25,7 @@ A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Sav
 | `engine/game_text.py`, `engine/check_framework.py` | Read the game text, and check it against an export of the framework document. |
 | `engine/scenario_matrix.py` | Reads the Response Matrix and checks the framework's rules (tripwires, clue counts, receptiveness ranks) and that the workbook agrees with itself. |
 | `engine/check_packet.py` | Checks that the scenario packet says the same things as the Response Matrix. |
+| `engine/head.html`, `engine/favicon.svg`, `engine/favicon-32.png`, `engine/apple-touch-icon.png` | The site icon (a magnifying glass) and the `<head>` lines that link it. The same for every scenario; the build copies the icons into `assets/`. The PNGs are renders of the SVG. |
 | `scenario/The Commons' Comma – Response Matrix.xlsx` | The scenario the game is built from: the scenario's text for each passage (the Hook, the endings …), the mystery, the final-answer form, witnesses, questions, every answer, Clues, Major Clues, Red Herrings and follow-ups. |
 | `scenario/The Commons' Comma – Scenario Packet.docx` | The designer's scenario packet: the same scenario written up for people, plus the timeline, the positions and the hidden payoff. Spoilers throughout. |
 | `source/story.twee` | The generated Twee source that `index.html` is compiled from. You can import it into Twine to inspect the passages. |
