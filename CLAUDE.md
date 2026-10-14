@@ -13,7 +13,7 @@ If a change seems needed in an Author-only document (for example to record an en
 
 ## Sources of truth (in order)
 
-1. The Google Doc "HEARsay mysteries" (above): the framework and rules. Read it; don't rely on older copies (`Archive/Hearsay Mystery Game.docx`, the claude.ai project's framework.md and the 2026-09-24 PDF export are superseded).
+1. The Google Doc "HEARsay mysteries" (above): the framework and rules. Read it; don't rely on older copies (`Archive/Hearsay Mystery Game.docx` and the claude.ai project's framework.md are superseded; the old PDF export has been removed).
 2. Per scenario: the Response Matrix (`scenario/… – Response Matrix.xlsx`), which the game is built from, and the Scenario Packet (`scenario/… – Scenario Packet.docx`), which must say the same things. Both are edited by hand.
 3. `engine/HEARsay game text.xlsx`: all of the engine's player-facing text and the framework's numbers (Facts sheet). `engine/hearsay_engine.twee` holds no wording.
 
@@ -24,7 +24,7 @@ Structural changes to the framework are the user's decisions and belong in the G
 ## Where things live
 
 - This repo: the built game (`index.html`, `assets/`, generated `source/story.twee`) plus copies of `engine/` and `scenario/`. Never edit `index.html` or `source/story.twee` by hand; rebuild.
-- Google Drive folder "HEARsay mystery game" (owner tperry@g.harvard.edu): the working copy. `HANDOFF.md` and the Mac-oriented `CLAUDE.md` (Tweego/SugarCube paths on the user's Mac), `Twine engine/`, `The Commons' Comma/` (matrix, packet, `Assets/`, `Game/` = what this repo contains), `Archive/`. Keep the repo and Drive in step.
+- Google Drive folder "HEARsay mystery game" (owner tperry@g.harvard.edu): the working copy. its `CLAUDE.md` (the full project notes, including the old handoff, open items and the Tweego/SugarCube paths on the user's Mac), `Twine engine/`, `The Commons' Comma/` (matrix, packet, `Assets/`, `Game/` = what this repo contains), `Archive/`. Keep the repo and Drive in step.
 
 ## Build
 
