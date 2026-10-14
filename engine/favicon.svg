@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-	<circle cx="26" cy="26" r="17" fill="#f7f1e3" stroke="#7a2e1f" stroke-width="7"/>
-	<line x1="39" y1="39" x2="56" y2="56" stroke="#7a2e1f" stroke-width="10" stroke-linecap="round"/>
+	<style>
+		.glass { stroke: #7a2e1f; }
+		@media (prefers-color-scheme: dark) { .glass { stroke: #d27a5c; } }
+	</style>
+	<g class="glass" fill="none">
+		<circle cx="26" cy="26" r="17" stroke-width="7"/>
+		<line x1="39" y1="39" x2="56" y2="56" stroke-width="10" stroke-linecap="round"/>
+	</g>
 </svg>
