@@ -98,7 +98,7 @@
 /* ==========================================================================
    HEARsay Mysteries — generic SugarCube 2 engine.
    All scenario content lives in setup.scenario (from the scenario's Response Matrix), and every piece of
-   the game's own text lives in setup.gameText (from HEARsay game text.xlsx); build_twine.py writes both.
+   the game's own text lives in setup.gameText (from HEARsay game text.xlsx); build.py writes both.
    Nothing in this file is specific to one scenario, and no player-facing text is written here.
    ========================================================================== */
 
