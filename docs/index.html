@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HEARsay Mysteries</title>
+<meta name="description" content="Short investigative games about conversational receptiveness, built on Julia Minson's HEAR framework." />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+<!-- The site's landing page. engine/build.py copies this to docs/index.html and replaces the SCENARIOS
+     placeholder (in double braces) with one entry per built scenario. Edit the wording here, then rebuild. -->
+<style>
+	:root {
+		--ink: #2a2118; --paper: #f7f1e3; --panel: #fffaf0; --line: #d8ccb2;
+		--accent: #7a2e1f; --muted: #6d604d;
+	}
+	* { box-sizing: border-box; }
+	body {
+		margin: 0; background: var(--paper); color: var(--ink);
+		font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; font-size: 17px; line-height: 1.55;
+	}
+	main { max-width: 46rem; margin: 0 auto; padding: 2.5rem 1rem 3rem; }
+	h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 .25rem; }
+	.tagline { color: var(--muted); margin: 0 0 2rem; font-style: italic; }
+	h2 { font-size: 1.3rem; margin: 2.2rem 0 .6rem; }
+	h3 { font-size: 1.2rem; margin: 0 0 .4rem; }
+	a { color: var(--accent); }
+	.moves { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .5rem; }
+	.moves li { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .55rem .8rem; }
+	.moves b { color: var(--accent); }
+	.scenarios { list-style: none; padding: 0; margin: 0; display: grid; gap: 1rem; }
+	.scenario { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.1rem; }
+	.scenario h3 a { text-decoration: none; color: var(--ink); }
+	.scenario p { margin: 0 0 .6rem; }
+	.scenario p:last-child { margin: 0; }
+	.play {
+		display: inline-block; background: var(--accent); color: #fffaf0; text-decoration: none;
+		padding: .35rem 1rem; border-radius: 6px;
+	}
+	.play:hover, .play:focus { background: #5e2317; }
+	footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); margin-top: 2.5rem; padding-top: 1rem; }
+</style>
+</head>
+<body>
+<main>
+	<h1>HEARsay Mysteries</h1>
+	<p class="tagline">Short investigative games about conversational receptiveness</p>
+
+	<p>Each game is a mystery on a university campus. You interview student witnesses who hold different views on a current campus controversy, and you have to solve the mystery before your questions run out. You get the most out of the witnesses by using the HEAR framework, which comes from Julia Minson's research on conversational receptiveness:</p>
+	<ul class="moves">
+		<li><b>H</b>edge your claims</li>
+		<li><b>E</b>mphasize agreement</li>
+		<li><b>A</b>cknowledge the other perspective</li>
+		<li><b>R</b>eframe to the positive</li>
+	</ul>
+	<p>A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Saves); saves are kept in the browser you're playing in.</p>
+
+	<h2>Mysteries</h2>
+	<ul class="scenarios">
+<li class="scenario"><h3><a href="commons-comma/index.html">The Commons&#x27; Comma</a></h3><p>The night before the university publicly examines its founding Charter to settle whether a disputed ink mark is a comma, the Charter vanishes from the archive. You have until five o&#x27;clock and forty questions to find out who took it, why, and where it is, by interviewing eight students who each know something and each have an opinion about the renovation the comma would decide.</p><p><a class="play" href="commons-comma/index.html">Play</a></p></li>
+	</ul>
+
+	<footer>
+		<p>Game design: Tomer Perry. The HEAR framework is from Yeomans, Minson, Collins, Chen and Gino, "Conversational receptiveness: Improving engagement with opposing views", <i>Organizational Behavior and Human Decision Processes</i> 160 (2020). All characters and events are fictional.</p>
+		<p><a href="https://github.com/HolyTispoon/HEARsay-Mysteries">Source on GitHub</a></p>
+	</footer>
+</main>
+</body>
+</html>

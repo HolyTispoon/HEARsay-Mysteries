@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Build a HEARsay scenario into a playable Twine (SugarCube 2) game.
+Build HEARsay scenarios into playable Twine (SugarCube 2) games, and the site's landing page.
 
-    python3 build_twine.py "SCENARIO – Response Matrix.xlsx" --assets ASSETS_DIR --out OUT_DIR [--repo]
-                           [--packet "SCENARIO – Scenario Packet.docx" | --no-packet-check]
-                           [--framework "HEARsay mysteries.docx" | --no-framework-check]
+    python3 engine/build.py [SCENARIO_ID ...] [--no-packet-check]
+                            [--framework "HEARsay mysteries.docx" | --no-framework-check]
+
+With no Scenario ID it builds every scenario in scenarios/. Each scenario is a folder scenarios/<Scenario ID>/
+holding its Response Matrix (.xlsx), its Scenario Packet (.docx) and assets/ (the portraits and the campus map).
 
 Three workbooks and two documents go into a game:
   - the framework Google Doc ("HEARsay mysteries"): the source of truth for the game's structure and rules;
@@ -15,28 +17,30 @@ Three workbooks and two documents go into a game:
 
 Steps:
   1. Reads the game text and checks it against the framework export (check_framework.py). The export is the
-     newest 'HEARsay mysteries' .docx/.txt/.pdf in the folder above this script's folder, or --framework.
-     If there is none (as in a published repository) the check is skipped with a warning.
-  2. Reads the matrix and stops if it breaks a framework rule or disagrees with itself (scenario_matrix.py).
-  3. Checks that the packet says the same things as the matrix (check_packet.py). The packet is the .docx
-     next to the matrix whose name contains "Packet", or --packet.
-  4. Writes the scenario and the game text into the engine as `setup.scenario` and `setup.gameText`,
-     and checks that every text the engine asks for is in the game text workbook.
-  5. Writes OUT_DIR/source/story.twee (Twee 3) and compiles it with Tweego into OUT_DIR/index.html.
-  6. Copies the witness portraits, the campus map and the site icons (ICONS) into OUT_DIR/assets/; head.html
-     links the icons from the page's <head>.
-  With --repo it also copies the engine, the game text, the matrix, the packet and a README into OUT_DIR,
-  so OUT_DIR is a complete, self-contained GitHub repository (GitHub Pages serves index.html).
-Every check stops the build and lists each problem.
+     newest 'HEARsay mysteries' .docx/.txt/.pdf in the repository folder or the folder above it (in Drive, the
+     folder holding the Google Doc), or --framework. If there is none the check is skipped with a warning.
+  2. Checks that every text the engine asks for is in the game text workbook.
+  3. For each scenario: reads the matrix and stops if it breaks a framework rule or disagrees with itself
+     (scenario_matrix.py), and checks that the packet says the same things as the matrix (check_packet.py).
+  4. Writes docs/<Scenario ID>/source/story.twee (Twee 3), with the scenario and the game text written into the
+     engine as `setup.scenario` and `setup.gameText`, and compiles it with Tweego into docs/<Scenario ID>/index.html.
+  5. Copies the scenario's portraits and map, and the site icons (ICONS), into docs/<Scenario ID>/assets/;
+     head.html links the icons from the page's <head>.
+  6. Writes the landing page, docs/index.html, from landing.html and every built scenario.
+Every check stops the build and lists each problem. GitHub Pages serves docs/.
 
 Needs openpyxl and python-docx (pip3 install openpyxl python-docx), and pypdf for a PDF framework export.
 
 Tweego: https://www.motoslave.net/tweego/ . Put `tweego` on your PATH, or set TWEEGO=/path/to/tweego.
-Tweego must have the SugarCube 2 story format installed (it ships with it).
+Tweego must have the SugarCube 2.37.3 story format (set TWEEGO_PATH to a folder holding sugarcube-2/ if the
+bundled one is older).
 """
 import argparse, glob, json, os, re, shutil, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)  # the repository
+SCENARIOS = os.path.join(ROOT, "scenarios")
+DOCS = os.path.join(ROOT, "docs")  # the published site
 sys.path.insert(0, HERE)
 from scenario_matrix import read_matrix, PASSAGE_PARTS
 from check_packet import check as check_packet
@@ -46,6 +50,7 @@ from check_framework import check as check_framework, find_export
 ENGINE = os.path.join(HERE, "hearsay_engine.twee")
 # Appended to the <head> of index.html; it links the site icons, which are the same for every scenario
 HEAD = os.path.join(HERE, "head.html")
+LANDING = os.path.join(HERE, "landing.html")  # the site's landing page; {{SCENARIOS}} becomes the list of games
 ICONS = ("favicon.svg", "favicon-32.png", "apple-touch-icon.png")
 # Text keys the engine builds at run time rather than naming outright
 DYNAMIC_KEYS = re.compile(r"^(rules\.\d+|hear\.[HEAR]\.(move|text)|result\.\w+|ending\.verdict\.\w+)$")
@@ -60,10 +65,12 @@ def load_game_text(framework, skip):
         return g
     note = None
     if not framework:
-        framework, note = find_export(os.path.dirname(HERE))
+        framework, note = find_export(ROOT)
+    if not framework:
+        framework, note = find_export(os.path.dirname(ROOT))  # in Drive: the folder holding the Google Doc
     if not framework:
         print("WARNING: no export of the framework ('HEARsay mysteries' .docx/.txt/.pdf) found, so the game text "
-              "was not checked against it. Export the Google Doc next to the .gdoc file, or pass --framework.")
+              "was not checked against it. Export the Google Doc next to the repository folder, or pass --framework.")
         return g
     problems, notes = check_framework(GAME_TEXT, framework)
     # the matrix's passage names must be framework names too
@@ -173,42 +180,46 @@ def copy(src, dst):
     shutil.copyfile(src, dst)
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("matrix", help="the scenario's Response Matrix .xlsx")
-    ap.add_argument("--assets", required=True, help="folder holding the campus map and the portrait PNGs (searched recursively)")
-    ap.add_argument("--out", required=True, help="output folder")
-    ap.add_argument("--repo", action="store_true", help="also copy engine, matrix, packet and README into --out")
-    ap.add_argument("--packet", help="the scenario packet .docx (default: the .docx next to the matrix with 'Packet' in its name)")
-    ap.add_argument("--no-packet-check", action="store_true", help="build without checking the packet against the matrix")
-    ap.add_argument("--framework", help="an export of the framework Google Doc (.docx, .txt or .pdf)")
-    ap.add_argument("--no-framework-check", action="store_true", help="build without checking the game text against the framework")
-    a = ap.parse_args()
+def scenario_files(sid):
+    """The matrix and the scenario folder of a Scenario ID."""
+    folder = os.path.join(SCENARIOS, sid)
+    if not os.path.isdir(folder):
+        sys.exit(f"No scenario folder {os.path.relpath(folder, ROOT)}. Scenarios: {', '.join(all_scenarios()) or 'none'}")
+    found = [p for p in glob.glob(os.path.join(folder, "*.xlsx")) if not os.path.basename(p).startswith("~$")]
+    if len(found) != 1:
+        sys.exit(f"Expected one Response Matrix .xlsx in {os.path.relpath(folder, ROOT)}, found {len(found)}")
+    return found[0], folder
 
-    g = load_game_text(a.framework, a.no_framework_check)
-    check_engine_keys(g)
-    d = load(a.matrix, g.facts)
-    packet = None
-    if a.no_packet_check:
+
+def all_scenarios():
+    return sorted(n for n in os.listdir(SCENARIOS) if os.path.isdir(os.path.join(SCENARIOS, n)) and not n.startswith("."))
+
+
+def build_scenario(sid, g, no_packet_check):
+    matrix, folder = scenario_files(sid)
+    print(f"\n== {sid}")
+    d = load(matrix, g.facts)
+    if d.SCENARIO_ID != sid:
+        sys.exit(f"The matrix's Scenario ID is '{d.SCENARIO_ID}', but its folder is scenarios/{sid}/. Make them the same.")
+    if no_packet_check:
         print("Skipping the packet check (--no-packet-check).")
     else:
-        packet = a.packet or find_packet(a.matrix)
-        problems = check_packet(a.matrix, packet)
+        packet = find_packet(matrix)
+        problems = check_packet(matrix, packet)
         if problems:
             sys.exit(f"The packet ({os.path.basename(packet)}) disagrees with the matrix; make them match before building:\n"
                      + "\n".join(" - " + p for p in problems))
         print(f"Packet OK: {os.path.basename(packet)} matches the matrix")
-    out = os.path.abspath(a.out)
-    os.makedirs(out, exist_ok=True)
 
-    # assets
+    out = os.path.join(DOCS, sid)
+    shutil.rmtree(out, ignore_errors=True)  # a clean build: nothing left over from an earlier one
+    assets = os.path.join(folder, "assets")
     for w in d.WITNESSES:
-        copy(find_file(a.assets, w["portrait"]), os.path.join(out, "assets", "portraits", w["portrait"]))
-    copy(find_file(a.assets, d.MAP), os.path.join(out, "assets", d.MAP))
+        copy(find_file(assets, w["portrait"]), os.path.join(out, "assets", "portraits", w["portrait"]))
+    copy(find_file(assets, d.MAP), os.path.join(out, "assets", d.MAP))
     for fn in ICONS:
         copy(os.path.join(HERE, fn), os.path.join(out, "assets", fn))
 
-    # twee
     data = json.dumps(scenario_json(d), ensure_ascii=False).replace("</", "<\\/")
     header = (
         f":: StoryTitle\n{d.TITLE}\n\n\n"
@@ -216,19 +227,17 @@ def main():
                                        "start": "Start"}, indent=2) + "\n\n\n"
     )
     text = json.dumps(g.text, ensure_ascii=False).replace("</", "<\\/")
-    scen = (f":: ScenarioData [script]\n/* Generated by build_twine.py from {os.path.basename(a.matrix)} and "
+    scen = (f":: ScenarioData [script]\n/* Generated by build.py from {os.path.basename(matrix)} and "
             f"{os.path.basename(GAME_TEXT)}. Do not edit by hand. */\nsetup.scenario = {data};\nsetup.gameText = {text};\n")
     with open(ENGINE, encoding="utf-8") as f:
         engine = f.read()
     # scenario data must load before the engine script, so it comes first
     twee = header + scen + "\n\n" + engine
-    src_dir = os.path.join(out, "source")
-    os.makedirs(src_dir, exist_ok=True)
-    twee_path = os.path.join(src_dir, "story.twee")
+    twee_path = os.path.join(out, "source", "story.twee")
+    os.makedirs(os.path.dirname(twee_path), exist_ok=True)
     with open(twee_path, "w", encoding="utf-8") as f:
         f.write(twee)
 
-    # compile
     tweego = os.environ.get("TWEEGO") or shutil.which("tweego")
     if not tweego:
         sys.exit(f"Wrote {twee_path}, but Tweego was not found. Install it or set TWEEGO=/path/to/tweego, then rerun.")
@@ -238,32 +247,72 @@ def main():
         sys.exit("Tweego failed:\n" + r.stderr)
     if r.stderr.strip():
         print(r.stderr.strip())
+    print(f"Built {os.path.relpath(os.path.join(out, 'index.html'), ROOT)}")
+    return {"id": sid, "title": d.TITLE, "pitch": d.PITCH or d.PUZZLE["mystery"], "ifid": d.IFID}
 
-    if a.repo:
-        for fn in ("hearsay_engine.twee", "build_twine.py", "scenario_matrix.py", "check_packet.py",
-                   "game_text.py", "check_framework.py", "head.html", *ICONS, os.path.basename(GAME_TEXT)):
-            copy(os.path.join(HERE, fn), os.path.join(out, "engine", fn))
-        scen_out = os.path.join(out, "scenario")
-        keep = {os.path.basename(a.matrix)} | ({os.path.basename(packet)} if packet else set())
-        if os.path.isdir(scen_out):  # drop anything left from an older layout (e.g. the retired .py data files)
-            for fn in os.listdir(scen_out):
-                if fn not in keep and os.path.isfile(os.path.join(scen_out, fn)):
-                    os.remove(os.path.join(scen_out, fn))
-        copy(os.path.abspath(a.matrix), os.path.join(scen_out, os.path.basename(a.matrix)))
-        if packet:
-            copy(os.path.abspath(packet), os.path.join(scen_out, os.path.basename(packet)))
-        readme = os.path.join(HERE, "README_template.md")
-        if os.path.exists(readme):
-            with open(readme, encoding="utf-8") as f:
-                txt = (f.read().replace("{{TITLE}}", d.TITLE).replace("{{MATRIX}}", os.path.basename(a.matrix))
-                       .replace("{{PACKET}}", os.path.basename(packet) if packet else "the scenario packet (.docx)"))
-            play_url = d.PLAY_URL  # the scenario's GitHub Pages URL; the line is omitted if unset
-            txt = txt.replace("{{PLAY_LINE}}", f"**Play online: {play_url}**\n\n" if play_url else "")
-            with open(os.path.join(out, "README.md"), "w", encoding="utf-8") as f:
-                f.write(txt)
-        open(os.path.join(out, ".nojekyll"), "w").close()
 
-    print(f"Built {os.path.join(out, 'index.html')}")
+def build_landing(built):
+    """docs/index.html: landing.html with one entry per scenario that has a built game in docs/."""
+    import html
+    entries = []
+    for sid in all_scenarios():
+        if not os.path.exists(os.path.join(DOCS, sid, "index.html")):
+            print(f"Note: scenarios/{sid}/ has no built game yet, so the landing page leaves it out.")
+            continue
+        s = built.get(sid) or summary(sid)
+        entries.append(f'<li class="scenario"><h3><a href="{html.escape(sid)}/index.html">{html.escape(s["title"])}</a></h3>'
+                       f'<p>{html.escape(s["pitch"])}</p><p><a class="play" href="{html.escape(sid)}/index.html">Play</a></p></li>')
+    with open(LANDING, encoding="utf-8") as f:
+        page = f.read()
+    if "{{SCENARIOS}}" not in page:
+        sys.exit(f"{os.path.basename(LANDING)} has no {{{{SCENARIOS}}}} placeholder for the list of scenarios")
+    with open(os.path.join(DOCS, "index.html"), "w", encoding="utf-8") as f:
+        f.write(page.replace("{{SCENARIOS}}", "\n".join(entries)))
+    for fn in ICONS:
+        copy(os.path.join(HERE, fn), os.path.join(DOCS, "assets", fn))
+    open(os.path.join(DOCS, ".nojekyll"), "w").close()  # serve the files as they are, without Jekyll
+    print(f"Built docs/index.html ({len(entries)} scenario{'s' if len(entries) != 1 else ''})")
+
+
+def summary(sid):
+    """Title, summary and IFID of a scenario that is not being built, read without the full matrix checks."""
+    import openpyxl
+    matrix, _ = scenario_files(sid)
+    wb = openpyxl.load_workbook(matrix, read_only=True, data_only=True)
+    settings = {str(r[0]).strip(): str(r[1] or "").strip() for r in wb["Settings"].iter_rows(min_row=2, values_only=True) if r and r[0]}
+    pitch = ""
+    for r in wb["Passages"].iter_rows(min_row=2, values_only=True):
+        if r and str(r[0] or "").strip() == "Start" and str(r[1] or "").strip() == "Summary":
+            pitch = str(r[2] or "").strip()
+    return {"id": sid, "title": settings.get("Title", sid), "pitch": pitch, "ifid": settings.get("IFID", "")}
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("scenarios", nargs="*", metavar="SCENARIO_ID", help="the scenarios to build (default: all of them)")
+    ap.add_argument("--no-packet-check", action="store_true", help="build without checking the packets against the matrices")
+    ap.add_argument("--framework", help="an export of the framework Google Doc (.docx, .txt or .pdf)")
+    ap.add_argument("--no-framework-check", action="store_true", help="build without checking the game text against the framework")
+    a = ap.parse_args()
+
+    ids = a.scenarios or all_scenarios()
+    if not ids:
+        sys.exit("No scenarios in scenarios/")
+    for sid in ids:
+        scenario_files(sid)  # fail before any work if a name is wrong
+    g = load_game_text(a.framework, a.no_framework_check)
+    check_engine_keys(g)
+    built = {sid: build_scenario(sid, g, a.no_packet_check) for sid in ids}
+
+    # every scenario needs its own IFID, or players' saves would collide
+    ifids = {}
+    for sid in all_scenarios():
+        ifid = (built.get(sid) or summary(sid))["ifid"].upper()
+        if ifid in ifids:
+            sys.exit(f"scenarios/{sid}/ and scenarios/{ifids[ifid]}/ have the same IFID; give each scenario its own.")
+        ifids[ifid] = sid
+    print()
+    build_landing(built)
 
 
 if __name__ == "__main__":
