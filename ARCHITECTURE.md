@@ -68,7 +68,7 @@ The build is deterministic: rebuilding the game in a cloud session, with Tweego 
 - Site address: `https://holytispoon.github.io/HEARsay-Mysteries/`, with each game at `…/<scenario-id>/`.
 - GitHub Pages serves the `docs/` folder of `main` (Settings → Pages → Branch: main, folder: /docs).
 - Saves are stored in the player's browser per site domain (`holytispoon.github.io`), which does not change. The game's title and IFID don't change either.
-- The old link, `https://holytispoon.github.io/HEARsay-Mysteries-Commons-Comma/`, stopped working when the repository was renamed (GitHub redirects repository addresses after a rename, not Pages addresses). A repository with the old name holding one forwarding page restores it; see Migration step 2.
+- The old link, `https://holytispoon.github.io/HEARsay-Mysteries-Commons-Comma/`, stopped working when the repository was renamed (GitHub redirects repository addresses after a rename, not Pages addresses). It is not redirected (decided 2026-10-18).
 
 ## Where builds run
 
@@ -97,14 +97,14 @@ HEARsay mystery game/
 ## Migration, in order
 
 1. **Restructure.** Done in this pull request: files moved with `git mv`, the build changed as above, the landing page, `README.md` and `CLAUDE.md` rewritten. Verified byte for byte (see Build).
-2. **Publish.** Done: the repository is renamed `HEARsay-Mysteries`. Still to do, by the author, right after merging: Settings → Pages → Build and deployment → Branch `main`, folder `/docs` → Save. Until then the site shows the repository root, which no longer holds a game. Then restore the old link: a repository named `HEARsay-Mysteries-Commons-Comma` with Pages on, holding one `index.html` that forwards to `https://holytispoon.github.io/HEARsay-Mysteries/commons-comma/`. (Creating it ends GitHub's redirect from the old repository address, which matters only to someone who cloned that address.)
+2. **Publish.** Done: the repository is renamed `HEARsay-Mysteries`. Still to do, by the author, right after merging: Settings → Pages → Build and deployment → Branch `main`, folder `/docs` → Save. Until then the site shows the repository root, which no longer holds a game.
 3. **Drive.** On the Mac, run `tools/setup-drive-clone.sh` (it clones into Drive and installs the scheduled pull). Then move `The Commons' Comma/Assets/` into the clone as `scenarios/commons-comma/source-art/` and commit it, and move `Twine engine/`, the rest of `The Commons' Comma/` and `Claude outputs/` to `Archive/`; Claude can do the Drive moves. As of 2026-10-15 every engine, matrix and packet file in those folders matches the repository in size. Update the Drive `CLAUDE.md`.
 4. **Cloud builds.** Done: `.claude/hooks/session-start.sh`.
 5. **Optional:** a check on GitHub that runs the build's checks on every pull request and fails if `docs/` is out of date.
 
 ## Decisions (2026-10-15)
 
-1. Repository renamed to `HEARsay-Mysteries`; games at `https://holytispoon.github.io/HEARsay-Mysteries/<scenario-id>/`.
+1. Repository renamed to `HEARsay-Mysteries`; games at `https://holytispoon.github.io/HEARsay-Mysteries/<scenario-id>/`. The old Pages link is not redirected (2026-10-18). The matrix's Play URL setting holds the new address, for reference.
 2. The landing page carries the project's introduction as well as the list of scenarios.
 3. The site folder is `docs/`, served directly by GitHub Pages.
 4. Source art is kept in the repository, in `scenarios/<id>/source-art/`.
