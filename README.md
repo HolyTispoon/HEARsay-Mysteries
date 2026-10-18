@@ -1,15 +1,21 @@
-# HEARsay Mysteries: The Commons' Comma
+# HEARsay Mysteries
 
-**Play online: https://holytispoon.github.io/HEARsay-Mysteries-Commons-Comma/**
+**Play online: https://holytispoon.github.io/HEARsay-Mysteries/**
 
-A short investigative game about conversational receptiveness. You interview eight student witnesses on a university campus, and you get the most out of them by using the HEAR framework (**H**edge your claims, **E**mphasize agreement, **A**cknowledge the other perspective, **R**eframe to the positive), which comes from Julia Minson's research on conversational receptiveness.
+Short investigative games about conversational receptiveness. Each game is a mystery on a university campus: you interview student witnesses, and you get the most out of them by using the HEAR framework (**H**edge your claims, **E**mphasize agreement, **A**cknowledge the other perspective, **R**eframe to the positive), which comes from Julia Minson's research on conversational receptiveness.
 
-The game is built in [Twine 2](https://twinery.org) with the [SugarCube 2](https://www.motoslave.net/sugarcube/2/) story format.
+The games are built in [Twine 2](https://twinery.org) with the [SugarCube 2](https://www.motoslave.net/sugarcube/2/) story format. All of them run on one engine; each scenario supplies its own story.
+
+## Scenarios
+
+| Scenario | Play | Folder |
+|---|---|---|
+| The Commons' Comma | https://holytispoon.github.io/HEARsay-Mysteries/commons-comma/ | `scenarios/commons-comma/` |
 
 ## Play
 
-- **Online:** open the GitHub Pages link for this repository.
-- **Offline:** download the repository (Code → Download ZIP), unzip it, and open `index.html` in a web browser. Keep `index.html` and the `assets` folder together; the images are loaded from `assets/`.
+- **Online:** open the link above and pick a mystery.
+- **Offline:** download the repository (Code → Download ZIP), unzip it, and open `docs/index.html` (or a game's `docs/<scenario>/index.html`) in a web browser. Keep each game's `index.html` and `assets` folder together.
 
 A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Saves). Saves are kept in the browser you're playing in.
 
@@ -17,36 +23,42 @@ A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Sav
 
 | Path | What it is |
 |---|---|
-| `index.html` | The compiled game. This is the only file a player needs, along with `assets/`. |
-| `assets/` | Witness portraits and the campus map. |
-| `engine/hearsay_engine.twee` | The generic game engine: SugarCube passages, JavaScript and CSS. It is the same for every scenario and holds no player-facing text. |
+| `engine/hearsay_engine.twee` | The game engine: SugarCube passages, JavaScript and CSS. The same for every scenario; it holds no player-facing text. |
 | `engine/HEARsay game text.xlsx` | The game's own text (rules, HEAR guide, headings, buttons), filed under the framework's passage names, and the framework's numbers (8 witnesses, 20 Clues, the question budget …). The same for every scenario. |
-| `engine/build_twine.py` | Build script: runs the checks below, adds the scenario and the game text to the engine, and compiles `index.html` with Tweego. |
+| `engine/build.py` | Build script: runs the checks below, adds each scenario and the game text to the engine, compiles each game with Tweego into `docs/`, and writes the landing page. |
 | `engine/game_text.py`, `engine/check_framework.py` | Read the game text, and check it against an export of the framework document. |
-| `engine/scenario_matrix.py` | Reads the Response Matrix and checks the framework's rules (tripwires, clue counts, receptiveness ranks) and that the workbook agrees with itself. |
-| `engine/check_packet.py` | Checks that the scenario packet says the same things as the Response Matrix. |
-| `engine/head.html`, `engine/favicon.svg`, `engine/favicon-32.png`, `engine/apple-touch-icon.png` | The site icon (a magnifying glass) and the `<head>` lines that link it. The same for every scenario; the build copies the icons into `assets/`. The SVG draws the glass in rust, or a lighter rust when the browser is in dark mode. The PNGs are renders of it: the 32 px one in rust; the 180 px iOS icon in the lighter rust with a margin, because iOS shows transparency as black and rounds the corners. |
-| `scenario/The Commons' Comma – Response Matrix.xlsx` | The scenario the game is built from: the scenario's text for each passage (the Hook, the endings …), the mystery, the final-answer form, witnesses, questions, every answer, Clues, Major Clues, Red Herrings and follow-ups. |
-| `scenario/The Commons' Comma – Scenario Packet.docx` | The designer's scenario packet: the same scenario written up for people, plus the timeline, the positions and the hidden payoff. Spoilers throughout. |
-| `source/story.twee` | The generated Twee source that `index.html` is compiled from. You can import it into Twine to inspect the passages. |
+| `engine/scenario_matrix.py` | Reads a Response Matrix and checks the framework's rules (tripwires, clue counts, receptiveness ranks) and that the workbook agrees with itself. |
+| `engine/check_packet.py` | Checks that a scenario packet says the same things as its Response Matrix. |
+| `engine/landing.html` | The landing page. The build fills in the list of scenarios. |
+| `engine/head.html`, `engine/favicon.svg`, `engine/favicon-32.png`, `engine/apple-touch-icon.png` | The site icon (a magnifying glass) and the `<head>` lines that link it. The SVG draws the glass in rust, or a lighter rust when the browser is in dark mode. The PNGs are renders of it: the 32 px one in rust; the 180 px iOS icon in the lighter rust with a margin, because iOS shows transparency as black and rounds the corners. |
+| `scenarios/<id>/… – Response Matrix.xlsx` | The scenario a game is built from: the scenario's text for each passage (the Hook, the endings …), the mystery, the final-answer form, witnesses, questions, every answer, Clues, Major Clues, Red Herrings and follow-ups. |
+| `scenarios/<id>/… – Scenario Packet.docx` | The designer's scenario packet: the same scenario written up for people, plus the timeline, the positions and the hidden payoff. Spoilers throughout. |
+| `scenarios/<id>/assets/` | The portraits and campus map the game shows. |
+| `scenarios/<id>/source-art/` | Original artwork, kept for reference; the build doesn't use it. |
+| `docs/` | The published site, generated by the build: the landing page and one folder per game (`index.html`, `assets/`, and `source/story.twee`, the Twee source the game is compiled from, which you can import into Twine). GitHub Pages serves this folder. |
+| `ARCHITECTURE.md` | Why the repository is laid out this way. |
 
-## Rebuild after editing the scenario
+## Rebuild after editing
 
-Edit the Response Matrix and make the same change in the packet, then rebuild. To change the game's own text, edit `engine/HEARsay game text.xlsx`.
+Edit a scenario's Response Matrix and make the same change in its packet, then rebuild. To change the game's own text, edit `engine/HEARsay game text.xlsx`; that changes every scenario, so rebuild them all.
 
-Requirements: Python 3.8+ with `openpyxl` and `python-docx` (`pip3 install openpyxl python-docx`; add `pypdf` to read a PDF export of the framework), and [Tweego](https://www.motoslave.net/tweego/) 2.1+ (it ships with SugarCube 2). Put `tweego` on your PATH, or set `TWEEGO=/path/to/tweego`.
+Requirements: Python 3.8+ with `openpyxl` and `python-docx` (`pip3 install openpyxl python-docx`; add `pypdf` to read a PDF export of the framework), and [Tweego](https://www.motoslave.net/tweego/) 2.1+ with SugarCube 2.37.3. Put `tweego` on your PATH, or set `TWEEGO=/path/to/tweego`; if its bundled SugarCube is older, set `TWEEGO_PATH` to a folder holding a `sugarcube-2` folder of version 2.37.3.
 
 From the repository root:
 
 ```
-python3 engine/build_twine.py "scenario/The Commons' Comma – Response Matrix.xlsx" --assets assets --out .
+python3 engine/build.py                  # every scenario
+python3 engine/build.py commons-comma    # one scenario
 ```
 
-The build stops if the matrix breaks a rule or disagrees with itself, or if the packet disagrees with the matrix, and it lists each problem. The game text is also checked against the framework document when an export of it is available (pass `--framework "HEARsay mysteries.docx"`); the framework is not part of this repository, so here that check is skipped with a warning. Open `index.html` to test, then commit.
+The build stops if a matrix breaks a rule or disagrees with itself, if a packet disagrees with its matrix, if a matrix's Scenario ID differs from its folder name, or if two scenarios share an IFID, and it lists each problem. The game text is also checked against the framework document when an export of it is available (pass `--framework "HEARsay mysteries.docx"`, or put the export in the folder above the repository); the framework is not part of this repository, so otherwise that check is skipped with a warning. Open `docs/index.html` to test, then commit the rebuilt `docs/` with your change.
 
-## Make a new scenario
+## Add a scenario
 
-Copy the Response Matrix and the packet, replace the content while keeping the same sheets and columns, put a new `IFID` (any UUID, uppercase) on the Settings sheet, add the new portraits and map to an assets folder, and build into a new folder or repository. You don't need to change the engine.
+1. Make a folder `scenarios/<id>/`, where `<id>` is a short lowercase ID such as `commons-comma`.
+2. Copy a Response Matrix and a packet into it and replace their content, keeping the same sheets and columns. On the matrix's Settings sheet, set the Scenario ID to `<id>` and put a new `IFID` (any UUID, in uppercase).
+3. Put the portraits and the campus map in `scenarios/<id>/assets/`.
+4. Run `python3 engine/build.py <id>`. The game appears at `docs/<id>/` and on the landing page. You don't need to change the engine.
 
 ## Credits
 
