@@ -344,14 +344,17 @@ Config.passages.nobr = false;
 		const s = S(), a = s.article;
 		if (!a) { go(V().lastMain || "Start"); return; }
 		const story = a.paragraphs.map(p => (p.quote ? el("blockquote", { class: "hs-paper-quote" }, p.text) : para(p.text)));
+		const firstTime = V().lastMain === "Rules";
 		out.append(
+			/* the heading says the article stays in the sidebar, so it shows only on the way from the Rules */
+			...(firstTime ? [el("h3", null, T("newspaper.intro"))] : []),
 			el("article", { class: "hs-paper" },
 				s.masthead ? el("img", { class: "hs-masthead", src: s.asset_dir + "/" + s.masthead, alt: T("newspaper.masthead_alt") }) : null,
 				el("h2", { class: "hs-headline" }, a.headline),
 				para(a.deck, "hs-deck"),
 				para(a.byline, "hs-byline"),
 				el("div", { class: "hs-columns" }, story)),
-			actionRow(V().lastMain === "Rules"
+			actionRow(firstTime
 				? btn(T("newspaper.next"), () => go("Hook"), "hs-primary")
 				: btn(T("common.return"), () => go(V().lastMain || "Map"))));
 	};
