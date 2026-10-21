@@ -29,9 +29,10 @@ Steps:
   4. Writes docs/<Scenario ID>/source/story.twee (Twee 3), with the scenario and the game text written into the
      engine as `setup.scenario` and `setup.gameText`, and compiles it with Tweego into docs/<Scenario ID>/index.html.
      The newspaper article, if the packet has a 'Newspaper article' tab, comes from the packet (packet_article),
-     and is also printed to docs/<Scenario ID>/newspaper-article.pdf (article_pdf.py, with headless Chrome).
-  5. Copies the scenario's portraits, map, logo and masthead (if it has them), and the site icons (ICONS), into
-     docs/<Scenario ID>/assets/; a logo or masthead not in the scenario's assets/ is looked for in SHARED_ASSETS;
+     and is also printed to docs/<Scenario ID>/newspaper-article.pdf (article_pdf.py, with headless Chrome), with
+     the illustration named in the matrix's Settings and the tab's caption and box.
+  5. Copies the scenario's portraits, map, logo, masthead, Start image and newspaper illustration (if it has them), and the site icons (ICONS), into
+     docs/<Scenario ID>/assets/; one of the optional images not in the scenario's assets/ is looked for in SHARED_ASSETS;
      head.html links the icons from the page's <head>.
   6. Writes the landing page, docs/index.html, from landing.html and every built scenario.
 Every check stops the build and lists each problem. GitHub Pages serves docs/.
@@ -148,6 +149,7 @@ def scenario_json(d, article=None, asset_dir="assets"):
         "map": d.MAP,
         "logo": d.LOGO,
         "masthead": d.MASTHEAD,
+        "start_image": d.START_IMAGE,
         "article": article_json(d, article),
         "rank_exact": d.FACTS["rank_exact"],
         "rank_near": d.FACTS["rank_near"],
@@ -246,7 +248,7 @@ def build_scenario(sid, g, no_packet_check):
     for w in d.WITNESSES:
         copy(find_file(assets, w["portrait"]), os.path.join(out, "assets", "portraits", w["portrait"]))
     copy(find_file(assets, d.MAP), os.path.join(out, "assets", d.MAP))
-    for fn in (d.LOGO, d.MASTHEAD):
+    for fn in (d.LOGO, d.MASTHEAD, d.START_IMAGE, d.NEWS_ART):
         if fn:
             own = os.path.join(assets, fn)
             copy(own if os.path.exists(own) else find_file(SHARED_ASSETS, fn), os.path.join(out, "assets", fn))
@@ -254,7 +256,8 @@ def build_scenario(sid, g, no_packet_check):
         copy(os.path.join(HERE, fn), os.path.join(out, "assets", fn))
     if article:
         masthead = d.MASTHEAD and os.path.join(out, "assets", d.MASTHEAD)
-        problem = write_pdf(article_json(d, article), masthead, os.path.join(out, PDF_NAME), previous)
+        art = d.NEWS_ART and os.path.join(out, "assets", d.NEWS_ART)
+        problem = write_pdf(article_json(d, article), masthead, art, os.path.join(out, PDF_NAME), previous)
         if problem:
             sys.exit(problem)
         print(f"Built {os.path.relpath(os.path.join(out, PDF_NAME), ROOT)}")
