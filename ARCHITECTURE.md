@@ -35,7 +35,8 @@ docs/                           the published site (generated; GitHub Pages serv
   <next-scenario>/…
 README.md, CLAUDE.md, ARCHITECTURE.md
 .claude/hooks/session-start.sh   installs the build tools in cloud sessions
-tools/setup-drive-clone.sh      sets up the Drive clone and the scheduled pull on the Mac
+tools/setup-drive-clone.sh      clones the repository into the Drive folder on the Mac (once)
+tools/update-drive.sh           brings the Drive clone up to date with main, run by hand
 ```
 
 - The engine, the game text and the build scripts exist once. A fix to the engine reaches every scenario on the next build.
@@ -92,7 +93,7 @@ HEARsay mystery game/
 
 - The sources of truth are the Google Docs and Sheets, outside the repository, and only the author edits them (decided 2026-10-21): the framework Doc, the game text Sheet, and each scenario's matrix (Sheet) and packet (Doc) in the scenario's Drive folder. The repository keeps read-only copies of the Sheets and packets, which the build reads; `engine/sources.json` and `scenarios/<id>/sources.json` record where the originals are.
 - On the Mac, Google Drive for desktop syncs the clone, with the folder set to "Available offline" so git works on local files.
-- A scheduled job on the Mac runs `git pull --ff-only` every 10 minutes while the clone is on `main`. Changes merged on GitHub (including Claude's) then appear in Drive without anyone moving files. It stops by itself (does nothing) if the clone has diverged, so it can't overwrite your edits.
+- Changes merged on GitHub (including Claude's) reach Drive when you run `bash tools/update-drive.sh` on the Mac. It fetches `main`, lists the commits and every file it would add, change or delete, and updates only after you confirm (`--check` only lists). It only touches files git tracks inside `HEARsay-Mysteries/`, never pushes, and refuses without changing anything if the clone isn't on `main`, has uncommitted edits to tracked files, or has commits GitHub doesn't. (Until 2026-10-21 a launchd job pulled every 10 minutes; the author decided against it, and `setup-drive-clone.sh` now removes it.)
 - Your edits reach GitHub when you commit and push them (GitHub Desktop: one commit, one push). Nothing pushes automatically.
 - Source art lives in the repository, in `scenarios/<id>/source-art/`.
 - Updating the copies: download the Google files into one folder and build with `--downloads <folder>`. The build checks all the downloads first (game text, matrix rules, packet against matrix) and copies nothing if one has a problem; then it replaces each copy whose content differs. The changed copies are committed with the rebuilt `docs/`, so every change to the text shows in a pull request. The build can't download the files itself (it has no Google credentials): in a Claude session the Drive connector exports them; on the Mac, File → Download.
@@ -101,7 +102,7 @@ HEARsay mystery game/
 
 1. **Restructure.** Done in this pull request: files moved with `git mv`, the build changed as above, the landing page, `README.md` and `CLAUDE.md` rewritten. Verified byte for byte (see Build).
 2. **Publish.** Done: the repository is renamed `HEARsay-Mysteries`. Still to do, by the author, right after merging: Settings → Pages → Build and deployment → Branch `main`, folder `/docs` → Save. Until then the site shows the repository root, which no longer holds a game.
-3. **Drive.** Done 2026-10-21: `tools/setup-drive-clone.sh` cloned the repository into Drive as `HEARsay-Mysteries/` and installed the scheduled pull. The pull is blocked until `/bin/bash` has Full Disk Access (System Settings → Privacy & Security → Full Disk Access); the log says "Operation not permitted" until then. Still to do: move `The Commons' Comma/Assets/` into the clone as `scenarios/commons-comma/source-art/` and commit it, and move `Twine engine/`, the rest of `The Commons' Comma/` and `Claude outputs/` to `Archive/`; Claude can do the Drive moves. As of 2026-10-15 every engine, matrix and packet file in those folders matches the repository in size. Update the Drive `CLAUDE.md`.
+3. **Drive.** Done 2026-10-21: `tools/setup-drive-clone.sh` cloned the repository into Drive as `HEARsay-Mysteries/`. `The Commons' Comma/` now holds the scenario's Google Sheet and Doc (and `Assets/`); its old .xlsx, .docx and `Game/` are in `Archive/Commons Comma before Google sources (2026-10-21)/`. Still to do: move `The Commons' Comma/Assets/` into the repository as `scenarios/commons-comma/source-art/` and commit it, and move `Twine engine/` and `Claude outputs/` to `Archive/`. Update the Drive `CLAUDE.md`.
 4. **Cloud builds.** Done: `.claude/hooks/session-start.sh`.
 5. **Optional:** a check on GitHub that runs the build's checks on every pull request and fails if `docs/` is out of date.
 
