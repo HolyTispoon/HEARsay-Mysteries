@@ -654,7 +654,7 @@ h3 { margin-top: 1.4em; font-size: 1.1em; color: var(--accent); }
 .hs-title { text-align: center; margin: 1em 0; }
 .hs-series { letter-spacing: .15em; text-transform: uppercase; font-size: .8em; color: var(--muted); }
 .hs-title h1 { font-size: 2.4em; margin: .2em 0; }
-.hs-pitch { max-width: 40em; margin: 0 auto; }
+.hs-pitch { max-width: 40em; margin: 0 auto; text-align: left; font-style: italic; }
 .hs-map { width: 100%; max-width: 900px; display: block; margin: 1em auto; border: 1px solid var(--line); border-radius: 6px; }
 blockquote { margin: 1em 0; padding: .6em 1em; background: var(--panel); border-left: 4px solid var(--accent); }
 .hs-clause { font-style: italic; }
