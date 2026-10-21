@@ -31,7 +31,7 @@ docs/                           the published site (generated; GitHub Pages serv
   index.html                    landing page: one entry per scenario
   commons-comma/
     index.html                  the game
-    assets/                     portraits, map, logo and icons, copied by the build
+    assets/                     portraits, map, logo, masthead and icons, copied by the build
     source/story.twee           the generated Twee source
   <next-scenario>/…
 README.md, CLAUDE.md, ARCHITECTURE.md

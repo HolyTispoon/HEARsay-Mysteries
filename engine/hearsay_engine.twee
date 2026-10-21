@@ -26,6 +26,7 @@
 <<link `setup.hs.T("menu.map")`>><<run setup.hs.go("Map")>><</link>>
 <<link `setup.hs.T("menu.evidence")`>><<run setup.hs.go("Evidence Board")>><</link>>
 <<link `setup.hs.T("menu.case_file")`>><<run setup.hs.go("Case File")>><</link>>
+<<if setup.scenario.article>><<link `setup.hs.T("menu.newspaper")`>><<run setup.hs.go("Newspaper")>><</link>><</if>>
 <<link `setup.hs.T("menu.hear")`>><<run setup.hs.go("HEAR Guide")>><</link>>
 <<link `setup.hs.T("menu.rules")`>><<run setup.hs.go("Rules Summary")>><</link>>
 
@@ -36,6 +37,10 @@
 
 :: Hook
 <<script>>setup.hs.view.hook(output)<</script>>
+
+
+:: Newspaper [ref]
+<<script>>setup.hs.view.newspaper(output)<</script>>
 
 
 :: Rules
@@ -184,7 +189,7 @@ Config.passages.nobr = false;
 	}
 
 	/* ---------- navigation ---------- */
-	const REF = ["Case File", "HEAR Guide", "Rules Summary", "Evidence Board"];
+	const REF = ["Case File", "HEAR Guide", "Rules Summary", "Evidence Board", "Newspaper"];
 	function go(passage) {
 		const v = V();
 		if (v.solved && ["Map", "Interview", "Answer", "Follow-up", "Follow-up Result", "Submission"].includes(passage)) {
@@ -292,7 +297,8 @@ Config.passages.nobr = false;
 			el("dd", null, T("hear." + L + ".text"))]));
 	}
 
-	/* The framework's order (3.1–3.2): an introduction (the game and HEAR on Start, then the Rules), then the Hook. */
+	/* The framework's order (3.1–3.2): an introduction (the game and HEAR on Start, then the Rules), then the Hook.
+	   A scenario with a newspaper article shows it between the Rules and the Hook. */
 	view.start = function (out) {
 		out.append(
 			el("div", { class: "hs-title" },
@@ -315,7 +321,7 @@ Config.passages.nobr = false;
 		const keys = Object.keys(setup.gameText || {}).filter(k => /^rules\.\d+$/.test(k))
 			.sort((a, b) => Number(a.split(".")[1]) - Number(b.split(".")[1]));
 		out.append(el("ol", { class: "hs-rules" }, keys.map(k => el("li", null, T(k)))));
-		if (firstTime) out.append(actionRow(btn(T("rules.next"), () => go("Hook"), "hs-primary")));
+		if (firstTime) out.append(actionRow(btn(T("rules.next"), () => go(S().article ? "Newspaper" : "Hook"), "hs-primary")));
 		else out.append(actionRow(btn(T("common.return"), () => go(V().lastMain || "Map"))));
 	};
 
@@ -330,6 +336,24 @@ Config.passages.nobr = false;
 			el("h3", null, T("hook.ccc")));
 		ccc(out, s);
 		out.append(actionRow(btn(T("hook.next"), () => go("Map"), "hs-primary")));
+	};
+
+	/* The scenario's newspaper article (the packet's "Newspaper article" tab), under its masthead (matrix Settings:
+	   Masthead). Reached from the Rules the first time, when it leads on to the Hook; from the sidebar after that. */
+	view.newspaper = function (out) {
+		const s = S(), a = s.article;
+		if (!a) { go(V().lastMain || "Start"); return; }
+		const story = a.paragraphs.map(p => (p.quote ? el("blockquote", { class: "hs-paper-quote" }, p.text) : para(p.text)));
+		out.append(
+			el("article", { class: "hs-paper" },
+				s.masthead ? el("img", { class: "hs-masthead", src: s.asset_dir + "/" + s.masthead, alt: T("newspaper.masthead_alt") }) : null,
+				el("h2", { class: "hs-headline" }, a.headline),
+				para(a.deck, "hs-deck"),
+				para(a.byline, "hs-byline"),
+				el("div", { class: "hs-columns" }, story)),
+			actionRow(V().lastMain === "Rules"
+				? btn(T("newspaper.next"), () => go("Hook"), "hs-primary")
+				: btn(T("common.return"), () => go(V().lastMain || "Map"))));
 	};
 
 	view.hearGuide = function (out) {
@@ -665,6 +689,16 @@ h3 { margin-top: 1.4em; font-size: 1.1em; color: var(--accent); }
 .hs-logo { display: block; height: auto; margin: 0 auto; }
 .hs-crest { width: 5.5em; margin-bottom: .6em; }
 .hs-letterhead { width: 3.5em; margin: .3em auto .6em; }
+.hs-paper { --news-ink: #1d2126; --news-soft: #4a5058; --news-rule: #c9c4b6; background: #fbf9f3; color: var(--news-ink); border: 1px solid var(--line); box-shadow: 0 2px 10px rgb(0 0 0 / .12); padding: 1.2em clamp(.9em, 3vw, 2.2em) 1.4em; }
+.hs-masthead { display: block; width: 100%; max-width: 40em; height: auto; margin: 0 auto; }
+.hs-paper .hs-headline { font-family: "Bodoni 72", Didot, "Bodoni MT", Georgia, serif; font-size: clamp(1.9em, 5vw, 3em); line-height: 1.05; margin: .6em 0 .25em; color: var(--news-ink); text-wrap: balance; }
+.hs-deck { font-style: italic; font-size: 1.15em; line-height: 1.4; color: var(--news-soft); margin: 0 0 .8em; max-width: 36em; }
+.hs-byline { font-family: "Helvetica Neue", Arial, sans-serif; font-size: .75em; letter-spacing: .1em; text-transform: uppercase; padding: .55em 0; margin: 0 0 1.1em; border-top: 1px solid var(--news-rule); border-bottom: 1px solid var(--news-rule); }
+.hs-columns { columns: 2 17em; column-gap: 2em; column-rule: 1px solid var(--news-rule); text-align: justify; hyphens: auto; }
+.hs-columns p { margin: 0 0 .8em; }
+.hs-columns > p:first-child::first-letter { float: left; font-family: "Bodoni 72", Didot, Georgia, serif; font-size: 3.7em; line-height: .8; padding: .06em .08em 0 0; }
+@media (max-width: 30em) { .hs-columns { text-align: left; } }
+.hs-paper-quote { break-inside: avoid; margin: .2em 0 1em; text-align: left; hyphens: manual; font-style: italic; background: var(--news-ink); color: #fbf9f3; border-left: 4px solid var(--news-rule); }
 .hs-map { width: 100%; max-width: 900px; display: block; margin: 1em auto; border: 1px solid var(--line); border-radius: 6px; }
 blockquote { margin: 1em 0; padding: .6em 1em; background: var(--panel); border-left: 4px solid var(--accent); }
 .hs-clause { font-style: italic; }
