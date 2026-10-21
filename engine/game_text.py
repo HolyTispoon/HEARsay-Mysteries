@@ -4,6 +4,9 @@ Read the game's own text and the framework's numbers from 'HEARsay game text.xls
 
     python3 game_text.py ["HEARsay game text.xlsx"]
 
+The source of truth is the Google Sheet "HEARsay game text" (its address is in sources.json). 'HEARsay game
+text.xlsx' next to this script is the repository's copy of it, which only the build updates (see sources.py).
+
 read_game_text() returns (game_text, errors). game_text.text maps each key to its text, game_text.facts maps each
 fact key to its value, and game_text.rows / .passages / .fact_rows keep the full rows for check_framework.py.
 Needs openpyxl (pip3 install openpyxl).
@@ -19,7 +22,7 @@ try:
 except ImportError:
     sys.exit("This needs openpyxl: pip3 install openpyxl")
 
-DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HEARsay game text.xlsx")
+DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HEARsay game text.xlsx")  # the copy of the Google Sheet
 # Placeholders every text can use; the engine fills them from the scenario and the facts.
 GLOBAL_PLACEHOLDERS = {"budget", "n_witnesses", "n_questions", "n_major", "bonus", "rank_exact", "rank_near", "ccc", "title"}
 CHECKS = {"verbatim", "paraphrase", "label"}
