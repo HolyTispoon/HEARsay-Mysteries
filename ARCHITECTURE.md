@@ -82,19 +82,20 @@ The build is deterministic: rebuilding the game in a cloud session, with Tweego 
 HEARsay mystery game/
   HEARsay mysteries               the framework Google Doc (Author only)
   HEARsay mysteries.docx          its export, read by the build's framework check
-  HEARsay game text               the game text Google Sheet (the source; engine/HEARsay game text.xlsx is its snapshot)
+  HEARsay game text               the game text Google Sheet
+  The Commons' Comma/             the scenario's Response Matrix (Google Sheet) and Scenario Packet (Google Doc)
   CLAUDE.md                       Drive notes; points to the repository for everything in it
   Section 5 draft – ….md
   HEARsay-Mysteries/              the git clone: engine/, scenarios/, docs/
   Archive/                        gains Twine engine/, the old The Commons' Comma/ folder, Claude outputs/
 ```
 
-- The clone is the only working copy. You edit the matrix and packet in `scenarios/<id>/`, in Drive or Finder, as you do now in `The Commons' Comma/`.
+- The sources of truth are the Google Docs and Sheets, outside the repository, and only the author edits them (decided 2026-10-21): the framework Doc, the game text Sheet, and each scenario's matrix (Sheet) and packet (Doc) in the scenario's Drive folder. The repository keeps read-only copies of the Sheets and packets, which the build reads; `engine/sources.json` and `scenarios/<id>/sources.json` record where the originals are.
 - On the Mac, Google Drive for desktop syncs the clone, with the folder set to "Available offline" so git works on local files.
 - A scheduled job on the Mac runs `git pull --ff-only` every 10 minutes while the clone is on `main`. Changes merged on GitHub (including Claude's) then appear in Drive without anyone moving files. It stops by itself (does nothing) if the clone has diverged, so it can't overwrite your edits.
 - Your edits reach GitHub when you commit and push them (GitHub Desktop: one commit, one push). Nothing pushes automatically.
 - Source art lives in the repository, in `scenarios/<id>/source-art/`.
-- The game's own text is edited in the Google Sheet [HEARsay game text](https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit) (from 2026-10-21). The build reads `engine/HEARsay game text.xlsx`, a snapshot of the Sheet: given an .xlsx export of the Sheet (`--game-text`, or a `HEARsay game text*.xlsx` in the repository folder or the folder above it), it replaces the snapshot when the cell values differ, after checking the export. The snapshot is committed with the rebuilt `docs/`, so every change to the text shows in a pull request. The build can't download the Sheet itself: it has no Google credentials. In a Claude session the Drive connector exports it; on the Mac, File → Download → Microsoft Excel.
+- Updating the copies: download the Google files into one folder and build with `--downloads <folder>`. The build checks all the downloads first (game text, matrix rules, packet against matrix) and copies nothing if one has a problem; then it replaces each copy whose content differs. The changed copies are committed with the rebuilt `docs/`, so every change to the text shows in a pull request. The build can't download the files itself (it has no Google credentials): in a Claude session the Drive connector exports them; on the Mac, File → Download.
 
 ## Migration, in order
 

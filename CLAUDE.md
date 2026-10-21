@@ -2,20 +2,15 @@
 
 A Twine 2 / SugarCube 2.37.3 game that teaches Julia Minson's HEAR framework (Hedge, Emphasize agreement, Acknowledge, Reframe to the positive). This repository holds every scenario (so far one, *The Commons' Comma*) and the engine they share; GitHub Pages serves the games from `docs/`. Owner: Tomer Perry (GitHub: HolyTispoon).
 
-## Author-only documents
+## Sources of truth: in Google Drive, edited only by the author
 
-Some documents are **Author only**. Never edit them directly. The only thing you may do is point out typos or grammatical errors, and only as suggestions (a comment or a suggested edit for the author to accept), never as a change to the text.
+Every source of truth is a Google Doc or Sheet in the Drive folder "HEARsay mystery game", outside this repository, and **only the author edits them**. Never edit them yourself, with any connector, even when asked to "update" one: propose the exact change (cell by cell, or the wording) and let the author make it. The only thing you may add is a suggestion or comment pointing out a typo or a grammatical error. Their addresses are in `engine/sources.json` and `scenarios/<id>/sources.json`.
 
-Author-only documents:
-- The framework Google Doc **"HEARsay mysteries"**: https://docs.google.com/document/d/1q2QzVFRMtBDEl7KbaLdKgp_xrxrseyejLyNDNfUky3Y/edit
+1. The framework Google Doc **"HEARsay mysteries"**: https://docs.google.com/document/d/1q2QzVFRMtBDEl7KbaLdKgp_xrxrseyejLyNDNfUky3Y/edit — the framework and rules. Read it; don't rely on older copies (`Archive/Hearsay Mystery Game.docx` and the claude.ai project's framework.md are superseded).
+2. The game text Google Sheet **"HEARsay game text"**: https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit — all of the engine's player-facing text and the framework's numbers (Facts sheet). `engine/hearsay_engine.twee` holds no wording.
+3. Per scenario, in the scenario's Drive folder (for example `The Commons' Comma/`): the Response Matrix (a Google Sheet), which the game is built from, and the Scenario Packet (a Google Doc), which must say the same things.
 
-If a change seems needed in an Author-only document (for example to record an engine choice, or to paste the section 5 draft), propose the wording to the user and let them make it.
-
-## Sources of truth (in order)
-
-1. The Google Doc "HEARsay mysteries" (above): the framework and rules. Read it; don't rely on older copies (`Archive/Hearsay Mystery Game.docx` and the claude.ai project's framework.md are superseded; the old PDF export has been removed).
-2. Per scenario: the Response Matrix (`scenarios/<id>/… – Response Matrix.xlsx`), which the game is built from, and the Scenario Packet (`scenarios/<id>/… – Scenario Packet.docx`), which must say the same things. Both are edited by hand.
-3. The Google Sheet **"HEARsay game text"** (https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit), in the Drive folder: all of the engine's player-facing text and the framework's numbers (Facts sheet). `engine/HEARsay game text.xlsx` is a snapshot of it that the build reads and updates; never edit the snapshot, edit the Sheet (with the Sheets connector) and rebuild with an export. `engine/hearsay_engine.twee` holds no wording.
+The repository holds read-only copies of the Sheets and the packets (`engine/HEARsay game text.xlsx`, `scenarios/<id>/… – Response Matrix.xlsx`, `scenarios/<id>/… – Scenario Packet.docx`). Never edit a copy: the build replaces it from a download of the Google file (see Build). If the documents and the live game disagree, ask the author which is right.
 
 Use the doc's names for the game's parts: Introduction, the Hook, the CCC, Clues, Red Herrings, Major Clues, tripwire, follow-up, budget, final-answer form; passages Start, Rules, the Hook, Map, Interview, Answer, Follow-up, Evidence Board, Submission, Result, ending, ranking. Don't invent other names.
 
@@ -23,8 +18,8 @@ Structural changes to the framework are the user's decisions and belong in the G
 
 ## Where things live
 
-- `engine/`: the same for every scenario. The engine (`hearsay_engine.twee`), the game text workbook, the build and check scripts, `landing.html` (the site's landing page; its wording is edited there), `head.html` and the site icons.
-- `scenarios/<Scenario ID>/`: one folder per scenario, named by the matrix's Scenario ID. The matrix, the packet, `assets/` (the portraits and map the game uses) and `source-art/` (originals, not used by the build).
+- `engine/`: the same for every scenario. The engine (`hearsay_engine.twee`), the copy of the game text Sheet, `sources.json` and `sources.py` (the sources of truth and the copies), the build and check scripts, `landing.html` (the site's landing page; its wording is edited there), `head.html` and the site icons.
+- `scenarios/<Scenario ID>/`: one folder per scenario, named by the matrix's Scenario ID. The copies of the matrix and the packet, `sources.json` (their Google addresses), `assets/` (the portraits and map the game uses) and `source-art/` (originals, not used by the build).
 - `docs/`: the published site, generated by the build. `index.html` is the landing page; `<id>/index.html` is each game, with its `assets/` and generated `source/story.twee`. Never edit anything in `docs/` by hand; rebuild.
 - `ARCHITECTURE.md`: why the repository is laid out this way, and the migration steps still open.
 - Google Drive folder "HEARsay mystery game" (owner tperry@g.harvard.edu): the framework Google Doc and its export, the Drive `CLAUDE.md` (project notes, open items and the Tweego/SugarCube paths on the user's Mac) and `Archive/`. The repository is cloned into that folder as `HEARsay-Mysteries/`, synced by Google Drive for desktop and pulled on the Mac every 10 minutes, so changes merged into `main` reach Drive by themselves. Nothing is copied between the repository and Drive by hand. The clone exists since 2026-10-21. Drive still holds the old folders `Twine engine/` and `The Commons' Comma/` until they are archived (see `ARCHITECTURE.md`); don't update them.
@@ -34,15 +29,16 @@ Structural changes to the framework are the user's decisions and belong in the G
 Needs Python 3.8+ with `openpyxl`, `python-docx` (and `pypdf` for a PDF export), and Tweego 2.1+ pointed at SugarCube 2.37.3. From the repo root:
 
 ```
-python3 engine/build.py --game-text "<export of the Sheet>.xlsx" --framework "<export of the Google Doc>.docx"                  # every scenario
-python3 engine/build.py commons-comma --game-text "<export of the Sheet>.xlsx" --framework "<export of the Google Doc>.docx"    # one scenario
+python3 engine/build.py --downloads "<folder of downloads>"                  # every scenario
+python3 engine/build.py commons-comma --downloads "<folder of downloads>"    # one scenario
+python3 engine/sources.py "<folder of downloads>"                           # lists the sources, copies and downloads found
 ```
 
-Before the checks, the build replaces the game text snapshot with `--game-text` (an .xlsx export of the Sheet) when the export's cell values differ; an export with problems stops the build. Without one it looks for a `HEARsay game text*.xlsx` in the repository folder and the folder above it, and otherwise warns and builds from the snapshot. Always build with a fresh export, and commit the snapshot if it changed.
+The downloads folder holds the Google files downloaded as they are named in Drive: the Sheets as .xlsx, the packets as .docx, and the framework Doc as .docx or .txt (found there for the framework check, or pass `--framework`). The build first checks every download (game text, matrix rules, packet against matrix); if one has a problem it stops and copies nothing. Then it replaces each copy whose content differs and says which ones changed; copies with no download are used as they are, with a warning. Always build with fresh downloads of everything, and commit the changed copies with the rebuilt `docs/`.
 
 Checks run in order: game text vs. framework export, engine text keys; then per scenario matrix vs. Facts and itself, Scenario ID vs. folder name, packet vs. matrix, then Twee, Tweego, assets; then no two scenarios share an IFID, and the landing page. It fails loudly: fix the source, don't loosen a check. Without `--framework` it looks for a `HEARsay mysteries` export in the repository folder and the folder above it (in Drive, next to the Google Doc); if there is none the framework check is skipped with a warning. An engine or game-text change needs every scenario rebuilt; commit the rebuilt `docs/` with it.
 
-In a cloud session, `.claude/hooks/session-start.sh` installs Tweego 2.1.1, SugarCube 2.37.3 and the Python packages and sets `TWEEGO` and `TWEEGO_PATH`. For the framework check, export the Google Doc as plain text through the Drive connector (`download_file_content` with `text/plain`) and pass the file with `--framework`. For the game text, export the Sheet with `download_file_content` (`exportMimeType` `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`), decode the base64 `content` to an .xlsx and pass it with `--game-text`.
+In a cloud session, `.claude/hooks/session-start.sh` installs Tweego 2.1.1, SugarCube 2.37.3 and the Python packages and sets `TWEEGO` and `TWEEGO_PATH`. For the framework check, export the Google Doc as plain text through the Drive connector (`download_file_content` with `text/plain`) and pass the file with `--framework`. To download the Sheets and Docs, use `download_file_content` with `exportMimeType` `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` (Sheets) or `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (Docs), decode the base64 `content` into a scratch folder under the file's Drive title plus .xlsx/.docx, and pass the folder with `--downloads`.
 
 ## Pull requests
 

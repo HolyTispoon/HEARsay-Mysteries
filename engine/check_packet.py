@@ -87,8 +87,8 @@ def expected(s):
     return [(l, norm(t)) for l, t in texts if t], patterns
 
 
-def check(matrix_path, packet_path):
-    s, errors = read_matrix(matrix_path)
+def check(matrix_path, packet_path, facts=None):
+    s, errors = read_matrix(matrix_path, facts)
     if errors:
         return [f"The matrix itself has problems; fix those first ({len(errors)}, run scenario_matrix.py)"]
     paras = packet_paragraphs(packet_path)
