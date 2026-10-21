@@ -67,12 +67,17 @@ def _paragraph_text(p):
 
 def framework_blocks(path):
     """The framework export in order, as (tab, style, text) for each non-empty paragraph and (tab, "Table", rows)
-    for each table, rows being lists of cell texts. Paragraphs before the first tab title have tab None."""
+    for each table, rows being lists of cell texts. Paragraphs before the first tab title have tab None.
+
+    Google's .docx export has marked tabs in two ways: with a Title paragraph holding the tab's name, or (since
+    October 2026, seen in the packets) only with a section break at the end of each tab. When one of the tabs the game
+    reads has no name in the export, the section that has its layout is taken as that tab (_shape_tab)."""
     import docx
+    from docx.oxml.ns import qn
     from docx.table import Table
     from docx.text.paragraph import Paragraph
     d = docx.Document(path)
-    blocks, tab = [], None
+    blocks, sections, tab, section = [], [], None, 0
     for el in d.element.body.iterchildren():
         if el.tag.endswith("}p"):
             p = Paragraph(el, d)
@@ -81,10 +86,47 @@ def framework_blocks(path):
                 tab = t
             elif t:
                 blocks.append((tab, p.style.name, _paragraph_text(p)))
+                sections.append((section, el.pPr is not None and el.pPr.numPr is not None))
+            if el.pPr is not None and el.pPr.find(qn("w:sectPr")) is not None:
+                section += 1
         elif el.tag.endswith("}tbl"):
             rows = [[" ".join(_paragraph_text(p) for p in c.paragraphs).strip() for c in r.cells] for r in Table(el, d).rows]
             blocks.append((tab, "Table", rows))
+            sections.append((section, False))
+    named = {b[0] for b in blocks}
+    for name in (RULES_TAB, HEAR_TAB, FACTS_TAB, TEXT_TAB):
+        if name in named:
+            continue
+        by_section = {}
+        for i, (n, _) in enumerate(sections):
+            by_section.setdefault(n, []).append(i)
+        found = [ix for ix in by_section.values() if _shape_tab([blocks[i] for i in ix], [sections[i][1] for i in ix]) == name]
+        if len(found) == 1:
+            for i in found[0]:
+                blocks[i] = (name,) + blocks[i][1:]
     return blocks
+
+
+def _shape_tab(blocks, listed):
+    """Which of the tabs the game reads a section's blocks are laid out as, if any. listed: whether each block is a
+    list item."""
+    styles = [style for _, style, _ in blocks]
+    heading = [s.startswith("Heading") for s in styles]
+    for _, style, rows in blocks:
+        if style == "Table" and rows:
+            head = [h.replace("*", "").strip() for h in rows[0]]
+            if head[:len(FACT_COLUMNS)] == FACT_COLUMNS:
+                return FACTS_TAB
+            if head[:len(TEXT_COLUMNS)] == TEXT_COLUMNS:
+                return TEXT_TAB
+    if "Table" in styles:
+        return None
+    if heading == [True, False] + [True, False] * 4 + [False] and \
+            "".join(blocks[2 + 2 * i][2].replace("*", "").strip()[:1].upper() for i in range(4)) == "HEAR":
+        return HEAR_TAB
+    if len(blocks) > 2 and heading[0] and not any(heading[1:]) and all(listed[1:]):
+        return RULES_TAB
+    return None
 
 
 def _table(blocks, tab, columns, errors):
