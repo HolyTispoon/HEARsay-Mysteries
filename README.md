@@ -24,9 +24,10 @@ A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Sav
 | Path | What it is |
 |---|---|
 | `engine/hearsay_engine.twee` | The game engine: SugarCube passages, JavaScript and CSS. The same for every scenario; it holds no player-facing text. |
-| `engine/HEARsay game text.xlsx` | A read-only copy of the Google Sheet [HEARsay game text](https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit), which is the source: the game's own text (rules, HEAR guide, headings, buttons), filed under the framework's passage names, and the framework's numbers (8 witnesses, 20 Clues, the question budget …). The same for every scenario. Only the build updates the copy. |
+| `engine/HEARsay game text.xlsx` | A read-only copy of the Google Sheet [HEARsay game text](https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit), which is the source: the game's own text (headings, buttons, prompts), filed under the framework's passage names, and the framework's numbers (8 witnesses, 20 Clues, the question budget …). The same for every scenario. Only the build updates the copy. |
+| `engine/HEARsay mysteries.docx` | A read-only copy of the framework Google Doc [HEARsay mysteries](https://docs.google.com/document/d/1q2QzVFRMtBDEl7KbaLdKgp_xrxrseyejLyNDNfUky3Y/edit). The build checks the game text against it and takes the game's rules and HEAR guide from its "Rules of the game" and "HEAR Framework introduction" tabs. Only the build updates the copy. |
 | `engine/build.py` | Build script: runs the checks below, adds each scenario and the game text to the engine, compiles each game with Tweego into `docs/`, and writes the landing page. |
-| `engine/game_text.py`, `engine/check_framework.py` | Read the game text, and check it against an export of the framework document. |
+| `engine/game_text.py`, `engine/check_framework.py` | Read the game text (the Sheet, and the rules and HEAR guide from the framework's tabs), and check it against the framework document. |
 | `engine/scenario_matrix.py` | Reads a Response Matrix and checks the framework's rules (tripwires, clue counts, receptiveness ranks) and that the workbook agrees with itself. |
 | `engine/check_packet.py` | Checks that a scenario packet says the same things as its Response Matrix. |
 | `engine/sources.py`, `engine/sources.json`, `scenarios/<id>/sources.json` | Where the sources of truth are in Google Drive, and how the build updates the repository's copies from downloads of them. |
@@ -42,11 +43,11 @@ A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Sav
 
 ## Rebuild after editing
 
-The sources of truth are Google Docs and Sheets in the Drive folder "HEARsay mystery game", not files in this repository, and only the author edits them: the framework Doc "HEARsay mysteries", the game text Sheet "HEARsay game text", and each scenario's Response Matrix (Sheet) and Scenario Packet (Doc). Edit a scenario's matrix and make the same change in its packet; edit the game text Sheet to change the game's own text in every scenario.
+The sources of truth are Google Docs and Sheets in the Drive folder "HEARsay mystery game", not files in this repository, and only the author edits them: the framework Doc "HEARsay mysteries", the game text Sheet "HEARsay game text", and each scenario's Response Matrix (Sheet) and Scenario Packet (Doc). Edit a scenario's matrix and make the same change in its packet; edit the game text Sheet to change the game's own text in every scenario, and the framework Doc's "Rules of the game" tab (a heading, then one paragraph per rule) or "HEAR Framework introduction" tab (a heading and an introduction, a heading and a paragraph for each of H, E, A and R, then a paragraph on unreceptive language) to change the rules or the HEAR guide. `{curly}` words in them are filled in by the game, as in the Sheet.
 
 To rebuild, download them (File → Download → Microsoft Excel for the Sheets, Microsoft Word for the Docs) into one folder, keeping their names, and pass that folder with `--downloads`. The build checks every download first and stops, copying nothing, if one has a problem. Then it replaces each copy in the repository whose content changed, and builds. Commit the changed copies with the rebuilt `docs/`.
 
-Requirements: Python 3.8+ with `openpyxl` and `python-docx` (`pip3 install openpyxl python-docx`; add `pypdf` to read a PDF export of the framework), and [Tweego](https://www.motoslave.net/tweego/) 2.1+ with SugarCube 2.37.3. Put `tweego` on your PATH, or set `TWEEGO=/path/to/tweego`; if its bundled SugarCube is older, set `TWEEGO_PATH` to a folder holding a `sugarcube-2` folder of version 2.37.3.
+Requirements: Python 3.8+ with `openpyxl` and `python-docx` (`pip3 install openpyxl python-docx`), and [Tweego](https://www.motoslave.net/tweego/) 2.1+ with SugarCube 2.37.3. Put `tweego` on your PATH, or set `TWEEGO=/path/to/tweego`; if its bundled SugarCube is older, set `TWEEGO_PATH` to a folder holding a `sugarcube-2` folder of version 2.37.3.
 
 From the repository root:
 
@@ -58,7 +59,7 @@ python3 engine/sources.py ~/Downloads/hearsay                           # lists 
 
 Without `--downloads` the build uses the copies as they are and warns that they may be behind the Google files.
 
-The build stops if a matrix breaks a rule or disagrees with itself, if a packet disagrees with its matrix, if a matrix's Scenario ID differs from its folder name, or if two scenarios share an IFID, and it lists each problem. The game text is also checked against the framework document when an export of it is available (put a download of it in the downloads folder, or pass `--framework "HEARsay mysteries.docx"`); the framework is not part of this repository, so otherwise that check is skipped with a warning. Open `docs/index.html` to test, then commit the rebuilt `docs/` with your change.
+The build stops if a matrix breaks a rule or disagrees with itself, if a packet disagrees with its matrix, if a matrix's Scenario ID differs from its folder name, or if two scenarios share an IFID, and it lists each problem. The game text is also checked against the framework document. Open `docs/index.html` to test, then commit the rebuilt `docs/` with your change.
 
 ## Add a scenario
 

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Check the game text workbook against an export of the framework Google Doc ("HEARsay mysteries").
+Check the game text workbook against the framework Google Doc ("HEARsay mysteries").
 
-    python3 check_framework.py ["HEARsay game text.xlsx"] "HEARsay mysteries.docx"
+    python3 check_framework.py ["HEARsay game text.xlsx" ["HEARsay mysteries.docx"]]
 
-The Google Doc is the source of truth for the game's structure and rules. Export it from Google Docs
-(File → Download → Microsoft Word, Plain text, or PDF) into the project folder, next to the .gdoc file.
-Word or plain text is best; PDF works if pypdf is installed (pip3 install pypdf).
+The Google Doc is the source of truth for the game's structure and rules, and its 'Rules of the game' and 'HEAR
+Framework introduction' tabs hold the game's rules and HEAR guide (see game_text.py). The build uses the
+repository's copy, engine/HEARsay mysteries.docx; by default so does this script. Another export can be passed
+instead: Word is best, since only a .docx has the tabs; plain text or PDF (with pypdf) work for the checks below,
+and the rules and HEAR guide then come from the copy.
 
 Checks:
   - every passage the framework lists (section 4, "Passages text: …") has a screen in the game, and every
@@ -17,10 +19,10 @@ Checks:
 Facts with no framework wording, and passages with no framework name, are listed as notes: they are engine
 choices the framework does not describe yet.
 """
-import glob, os, re, sys
+import os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from game_text import read_game_text, DEFAULT
+from game_text import read_game_text, DEFAULT, FRAMEWORK
 
 NUMBER_WORDS = {"once": 1, "one": 1, "two": 2, "twice": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
                 "eight": 8, "nine": 9, "ten": 10, "sixteen": 16, "twenty": 20, "forty": 40, "half": 0.5}
@@ -53,21 +55,6 @@ def framework_text(path):
     sys.exit(f"Can't read {path}: export the framework as .docx, .txt or .pdf")
 
 
-def find_export(folder):
-    """The newest 'HEARsay mysteries*' export in folder, and a note if the Google Doc changed after it."""
-    found = [p for p in glob.glob(os.path.join(folder, "HEARsay mysteries*"))
-             if os.path.splitext(p)[1].lower() in (".docx", ".txt", ".pdf")]
-    if not found:
-        return None, None
-    path = max(found, key=os.path.getmtime)
-    note = None
-    gdoc = [p for p in glob.glob(os.path.join(folder, "HEARsay mysteries*.gdoc"))]
-    if gdoc and os.path.getmtime(gdoc[0]) > os.path.getmtime(path) + 60:
-        note = (f"The Google Doc looks newer than the export {os.path.basename(path)}. If the doc has changed, "
-                "export it again (File → Download) so the check uses the current framework.")
-    return path, note
-
-
 def passage_list(full, paragraphs):
     """The names in the framework's 'Passages text:' line."""
     source = None
@@ -91,8 +78,8 @@ def numbers_in(s):
     return out
 
 
-def check(game_text_path, export_path):
-    g, errors = read_game_text(game_text_path)
+def check(game_text_path, export_path=FRAMEWORK):
+    g, errors = read_game_text(game_text_path, export_path if export_path.lower().endswith(".docx") else FRAMEWORK)
     if errors:
         return [f"The game text workbook has problems; fix those first ({len(errors)}, run game_text.py)"], []
     full, paragraphs = framework_text(export_path)
@@ -141,10 +128,8 @@ def check(game_text_path, export_path):
 
 
 def main():
-    args = sys.argv[1:]
-    if len(args) == 1:
-        args = [DEFAULT] + args
-    if len(args) != 2:
+    args = sys.argv[1:] or [DEFAULT]
+    if len(args) > 2:
         sys.exit(__doc__)
     problems, notes = check(*args)
     print("GAME TEXT DISAGREES WITH THE FRAMEWORK:" if problems else "OK: the game text matches the framework")

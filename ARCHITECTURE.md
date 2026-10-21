@@ -74,16 +74,15 @@ The build is deterministic: rebuilding the game in a cloud session, with Tweego 
 
 ## Where builds run
 
-- **Cloud sessions (Claude):** a SessionStart hook (`.claude/hooks/session-start.sh`) installs Tweego 2.1.1, SugarCube 2.37.3, `openpyxl` and `python-docx`, so every session can build and run the regression check. The framework check uses a text export of the Google Doc fetched through the Drive connector.
+- **Cloud sessions (Claude):** a SessionStart hook (`.claude/hooks/session-start.sh`) installs Tweego 2.1.1, SugarCube 2.37.3, `openpyxl` and `python-docx`, so every session can build and run the regression check. The framework Doc is downloaded through the Drive connector like the other sources.
 - **The Mac:** as today (Tweego path and SugarCube folder in the Drive `CLAUDE.md`), run from the clone.
-- **GitHub (later, optional):** an Action that runs the checks on every pull request and fails if `docs/` is out of date. It can't run the framework check, because the Google Doc is not in the repository.
+- **GitHub (later, optional):** an Action that runs the checks on every pull request and fails if `docs/` is out of date.
 
 ## Drive
 
 ```
 HEARsay mystery game/
   HEARsay mysteries               the framework Google Doc (Author only)
-  HEARsay mysteries.docx          its export, read by the build's framework check
   HEARsay game text               the game text Google Sheet
   The Commons' Comma/             the scenario's Response Matrix (Google Sheet) and Scenario Packet (Google Doc)
   CLAUDE.md                       Drive notes; points to the repository for everything in it
@@ -92,7 +91,7 @@ HEARsay mystery game/
   Archive/                        gains Twine engine/, the old The Commons' Comma/ folder, Claude outputs/
 ```
 
-- The sources of truth are the Google Docs and Sheets, outside the repository, and the author edits them, or asks Claude to make a specific change (as suggestions in the Docs, decided 2026-10-21): the framework Doc, the game text Sheet, and each scenario's matrix (Sheet) and packet (Doc) in the scenario's Drive folder. The repository keeps read-only copies of the Sheets and packets, which the build reads; `engine/sources.json` and `scenarios/<id>/sources.json` record where the originals are.
+- The sources of truth are the Google Docs and Sheets, outside the repository, and the author edits them, or asks Claude to make a specific change (as suggestions in the Docs, decided 2026-10-21): the framework Doc, the game text Sheet, and each scenario's matrix (Sheet) and packet (Doc) in the scenario's Drive folder. The repository keeps read-only copies of the framework Doc, the Sheets and the packets, which the build reads (since 2026-10-21 the game's rules and HEAR guide come from two tabs of the framework Doc rather than the Sheet); `engine/sources.json` and `scenarios/<id>/sources.json` record where the originals are.
 - On the Mac, Google Drive for desktop syncs the clone, with the folder set to "Available offline" so git works on local files.
 - Changes merged on GitHub (including Claude's) reach Drive when you run `bash tools/update-drive.sh` on the Mac. It fetches `main`, lists the commits and every file it would add, change or delete, and updates only after you confirm (`--check` only lists). It only touches files git tracks inside `HEARsay-Mysteries/`, never pushes, and refuses without changing anything if the clone isn't on `main`, has uncommitted edits to tracked files, or has commits GitHub doesn't. (Until 2026-10-21 a launchd job pulled every 10 minutes; the author decided against it, and `setup-drive-clone.sh` now removes it.)
 - Your edits reach GitHub when you commit and push them (GitHub Desktop: one commit, one push). Nothing pushes automatically.
