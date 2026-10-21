@@ -29,7 +29,8 @@ Steps:
      (scenario_matrix.py), and checks that the packet says the same things as the matrix (check_packet.py).
   4. Writes docs/<Scenario ID>/source/story.twee (Twee 3), with the scenario and the game text written into the
      engine as `setup.scenario` and `setup.gameText`, and compiles it with Tweego into docs/<Scenario ID>/index.html.
-  5. Copies the scenario's portraits and map, and the site icons (ICONS), into docs/<Scenario ID>/assets/;
+  5. Copies the scenario's portraits, map and logo (if it has one), and the site icons (ICONS), into
+     docs/<Scenario ID>/assets/; a logo not in the scenario's assets/ is looked for in SHARED_ASSETS;
      head.html links the icons from the page's <head>.
   6. Writes the landing page, docs/index.html, from landing.html and every built scenario.
 Every check stops the build and lists each problem. GitHub Pages serves docs/.
@@ -58,6 +59,8 @@ ENGINE = os.path.join(HERE, "hearsay_engine.twee")
 HEAD = os.path.join(HERE, "head.html")
 LANDING = os.path.join(HERE, "landing.html")  # the site's landing page; {{SCENARIOS}} becomes the list of games
 ICONS = ("favicon.svg", "favicon-32.png", "apple-touch-icon.png")
+# Images more than one scenario may use, such as a university's logo. A scenario's own assets/ come first.
+SHARED_ASSETS = os.path.join(HERE, "shared-assets")
 # Text keys the engine builds at run time rather than naming outright
 DYNAMIC_KEYS = re.compile(r"^(rules\.\d+|hear\.[HEAR]\.(move|text)|result\.\w+|ending\.verdict\.\w+)$")
 
@@ -141,6 +144,7 @@ def scenario_json(d, asset_dir="assets"):
         "followup_bonus": d.FOLLOWUP_BONUS,
         "asset_dir": asset_dir,
         "map": d.MAP,
+        "logo": d.LOGO,
         "rank_exact": d.FACTS["rank_exact"],
         "rank_near": d.FACTS["rank_near"],
         "puzzle": {
@@ -225,6 +229,9 @@ def build_scenario(sid, g, no_packet_check):
     for w in d.WITNESSES:
         copy(find_file(assets, w["portrait"]), os.path.join(out, "assets", "portraits", w["portrait"]))
     copy(find_file(assets, d.MAP), os.path.join(out, "assets", d.MAP))
+    if d.LOGO:
+        own = os.path.join(assets, d.LOGO)
+        copy(own if os.path.exists(own) else find_file(SHARED_ASSETS, d.LOGO), os.path.join(out, "assets", d.LOGO))
     for fn in ICONS:
         copy(os.path.join(HERE, fn), os.path.join(out, "assets", fn))
 
