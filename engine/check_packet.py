@@ -53,11 +53,14 @@ ARTICLE_TAB = "Newspaper article"  # the packet tab whose text the game shows as
 def packet_article(path):
     """The packet's newspaper article, or None if the packet has no 'Newspaper article' tab.
 
-    The tab (exported as a Title paragraph with the tab's name) holds a heading (the headline), then the deck,
-    a line starting "By " (the byline) and the paragraphs of the story, up to the next tab. Returns
+    The tab holds a heading (the headline), then the deck, a line starting "By " (the byline) and the paragraphs
+    of the story, up to the next tab. Google's .docx export has marked tabs in two ways: with a Title paragraph
+    holding the tab's name, or (since October 2026) only with a section break at the end of each tab. Without the
+    name, the article tab is the one that opens with a headline, a deck and a byline. Returns
     ({"headline", "deck", "byline", "paragraphs"}, problems)."""
+    paragraphs = docx.Document(path).paragraphs
     tab, inside = [], False
-    for p in docx.Document(path).paragraphs:
+    for p in paragraphs:
         if p.style.name == "Title":
             if inside:
                 break
@@ -67,7 +70,20 @@ def packet_article(path):
         if inside and t:
             tab.append((p.style.name, t))
     if not tab:
-        return None, []
+        tabs = [[]]
+        for p in paragraphs:
+            t = " ".join(p.text.split())
+            if t:
+                tabs[-1].append((p.style.name, t))
+            if p._p.pPr is not None and p._p.pPr.find(qn("w:sectPr")) is not None:
+                tabs.append([])
+        found = [s for s in tabs if len(s) > 2 and s[0][0].startswith("Heading") and s[2][1].startswith("By ")]
+        if len(found) > 1:
+            return None, [f"The packet has {len(found)} tabs that look like a newspaper article (a heading, a deck "
+                          "and a 'By …' line); keep the article in one tab"]
+        if not found:
+            return None, []
+        tab = found[0]
     head = next((i for i, (style, _) in enumerate(tab) if style.startswith("Heading")), None)
     by = next((i for i, (_, t) in enumerate(tab) if t.startswith("By ")), None)
     if head is None or by is None or by != head + 2:

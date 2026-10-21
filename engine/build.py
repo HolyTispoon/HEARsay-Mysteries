@@ -49,7 +49,7 @@ SCENARIOS = os.path.join(ROOT, "scenarios")
 DOCS = os.path.join(ROOT, "docs")  # the published site
 sys.path.insert(0, HERE)
 from scenario_matrix import read_matrix, PASSAGE_PARTS
-from check_packet import check as check_packet, norm, packet_article
+from check_packet import check as check_packet, norm, packet_article, ARTICLE_TAB
 from game_text import read_game_text, DEFAULT as GAME_TEXT, FRAMEWORK
 from sources import update_copies
 from check_framework import check as check_framework
@@ -226,6 +226,10 @@ def build_scenario(sid, g, no_packet_check):
     article, problems = packet_article(packet)
     if problems:
         sys.exit(f"The packet's newspaper article can't be read:\n" + "\n".join(" - " + p for p in problems))
+    # the masthead only heads the article, so a scenario that names one must have an article
+    if d.MASTHEAD and not article:
+        sys.exit(f"The matrix names a masthead ({d.MASTHEAD}) but no newspaper article was found in the packet "
+                 f"({os.path.basename(packet)}). Check its '{ARTICLE_TAB}' tab, or remove the Masthead setting.")
     print(f"Newspaper article: {article['headline']}" if article else "No newspaper article in the packet")
 
     out = os.path.join(DOCS, sid)
