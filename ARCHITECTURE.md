@@ -38,6 +38,7 @@ README.md, CLAUDE.md, ARCHITECTURE.md
 .claude/hooks/session-start.sh   installs the build tools in cloud sessions
 tools/setup-drive-clone.sh      clones the repository into the Drive folder on the Mac (once)
 tools/update-drive.sh           brings the Drive clone up to date with main, run by hand
+tools/publish.sh                downloads the Google files, rebuilds, and publishes to main, run by hand
 ```
 
 - The engine, the game text and the build scripts exist once. A fix to the engine reaches every scenario on the next build.
