@@ -2,9 +2,13 @@
 
 A Twine 2 / SugarCube 2.37.3 game that teaches Julia Minson's HEAR framework (Hedge, Emphasize agreement, Acknowledge, Reframe to the positive). This repository holds every scenario (so far one, *The Commons' Comma*) and the engine they share; GitHub Pages serves the games from `docs/`. Owner: Tomer Perry (GitHub: HolyTispoon).
 
-## Sources of truth: in Google Drive, edited only by the author
+## Sources of truth: in Google Drive, edited by the author
 
-Every source of truth is a Google Doc or Sheet in the Drive folder "HEARsay mystery game", outside this repository, and **only the author edits them**. Never edit them yourself, with any connector, even when asked to "update" one: propose the exact change (cell by cell, or the wording) and let the author make it. The only thing you may add is a suggestion or comment pointing out a typo or a grammatical error. Their addresses are in `engine/sources.json` and `scenarios/<id>/sources.json`.
+Every source of truth is a Google Doc or Sheet in the Drive folder "HEARsay mystery game", outside this repository, and **the author edits them**. By default, don't edit them: propose the exact change (cell by cell, or the wording) and let the author make it. Edit one yourself only when the author explicitly asks you to make that change in it, for that task ("you edit the files"); a request to "update", "fix" or "rework" something without that is a request for the proposed change. When you do edit one:
+- Change only what the author explicitly asked for. Anything else you notice (a typo, an inconsistency, a related fix) is a proposal in your reply, not an edit.
+- Google Docs: make every change as a suggestion (`writeControl.writeMode: "SUGGEST"`), so the author accepts or rejects each one. If the Docs API refuses suggestion mode, stop and ask; never fall back to a direct edit.
+- Google Sheets have no suggestion mode, so changes there are direct: keep a copy of the cells you replace, and list every changed cell (old → new) in your reply so the author can check and revert them.
+- Afterwards, download the file and check it with the build. A Doc's pending suggestions are not in its download until the author accepts them, so build only after that. Without that request, the only thing you may add is a suggestion or comment pointing out a typo or a grammatical error. Their addresses are in `engine/sources.json` and `scenarios/<id>/sources.json`.
 
 1. The framework Google Doc **"HEARsay mysteries"**: https://docs.google.com/document/d/1q2QzVFRMtBDEl7KbaLdKgp_xrxrseyejLyNDNfUky3Y/edit — the framework and rules. Read it; don't rely on older copies (`Archive/Hearsay Mystery Game.docx` and the claude.ai project's framework.md are superseded).
 2. The game text Google Sheet **"HEARsay game text"**: https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit — all of the engine's player-facing text and the framework's numbers (Facts sheet). `engine/hearsay_engine.twee` holds no wording.
