@@ -49,11 +49,11 @@ The sources of truth are Google Docs and Sheets in the Drive folder "HEARsay mys
 On the Mac, from anywhere:
 
 ```
-bash tools/publish.sh             # download, build, list what changed, ask, publish
+bash tools/publish.sh             # download, build, list what changed, publish
 bash tools/publish.sh --check     # download and build, list what would change, publish nothing
 ```
 
-It opens each Google file's download link in your browser (so the browser must be signed in to Google), builds in its own copy of the repository under `~/.cache/hearsay-publish` (never in the Drive clone), runs every check below, lists the files the rebuild changed and asks before publishing. Publishing commits them to a new branch, opens a pull request and merges it into `main`; GitHub Pages serves the new games a minute or two later. Then it runs `tools/update-drive.sh`, which asks before updating the Drive clone. The first run installs Tweego, SugarCube 2.37.3 and the Python packages into `~/.cache/hearsay-build-tools`. It needs the GitHub CLI signed in (`gh auth login`). Pass `--downloads FOLDER` to use files you already downloaded instead of the browser.
+It opens each Google file's download link in your browser (so the browser must be signed in to Google), builds in its own copy of the repository under `~/.cache/hearsay-publish` (never in the Drive clone), runs every check below, lists the files the rebuild changed and publishes them without asking. Publishing commits them to a new branch, opens a pull request and merges it into `main`; GitHub Pages serves the new games a minute or two later. Then it runs `tools/update-drive.sh`, which asks before updating the Drive clone. The first run installs Tweego, SugarCube 2.37.3 and the Python packages into `~/.cache/hearsay-build-tools`. It needs the GitHub CLI signed in (`gh auth login`). Pass `--downloads FOLDER` to use files you already downloaded instead of the browser.
 
 ### Rebuild by hand
 

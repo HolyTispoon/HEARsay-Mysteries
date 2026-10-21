@@ -13,7 +13,7 @@
 #      folder in ~/.cache/hearsay-publish/downloads.
 #   3. Builds in its own copy of the repository (~/.cache/hearsay-publish/HEARsay-Mysteries, reset to GitHub's main
 #      each run), never in the Drive clone. The build runs every check and stops if one fails.
-#   4. Lists every file the rebuild changed and asks before publishing. If nothing changed, it stops there.
+#   4. Lists every file the rebuild changed. If nothing changed, it stops there.
 #   5. Publishes: commits to a new branch, opens a pull request, and merges it into main. GitHub Pages serves the
 #      new games a minute or two later.
 #   6. Runs tools/update-drive.sh, which lists what it would change in the Drive clone and asks first.
@@ -165,11 +165,6 @@ if $check_only; then
   echo "Nothing published (--check)."
   exit 0
 fi
-read -r -p "Publish these changes? [y/N] " answer
-case "$answer" in
-  y|Y|yes|Yes) ;;
-  *) echo "Nothing published."; exit 0 ;;
-esac
 
 # 5. publish
 branch="publish/$(date +%Y-%m-%d-%H%M%S)"
