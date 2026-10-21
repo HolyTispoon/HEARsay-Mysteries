@@ -18,6 +18,7 @@ engine/                         the same for every scenario (unchanged contents)
   landing.html                  the landing page, with a placeholder for the list of scenarios
   scenario_matrix.py, check_packet.py, game_text.py, check_framework.py
   head.html, favicon.svg, favicon-32.png, apple-touch-icon.png
+  shared-assets/                images more than one scenario may use (Blank University's logo, The Blank's masthead)
 scenarios/
   commons-comma/                folder name = the matrix's Scenario ID
     The Commons' Comma – Response Matrix.xlsx
@@ -30,7 +31,7 @@ docs/                           the published site (generated; GitHub Pages serv
   index.html                    landing page: one entry per scenario
   commons-comma/
     index.html                  the game
-    assets/                     portraits, map and icons, copied by the build
+    assets/                     portraits, map, logo and icons, copied by the build
     source/story.twee           the generated Twee source
   <next-scenario>/…
 README.md, CLAUDE.md, ARCHITECTURE.md

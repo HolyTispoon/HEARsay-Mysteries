@@ -255,6 +255,12 @@ Config.passages.nobr = false;
 			el("span", { class: "hs-budget" }, R("status.questions_left", { left: v.questionsLeft })),
 			hearBadge());
 	}
+	/* The scenario's university logo (matrix Settings: Logo) in a list, or an empty list; spread it in place.
+	   Decorative, so no alt text. */
+	function logo(cls) {
+		return S().logo ? [el("img", { class: "hs-logo " + cls, src: S().asset_dir + "/" + S().logo, alt: "" })] : [];
+	}
+
 	function portrait(w, cls) {
 		return el("img", { class: "hs-portrait " + (cls || ""), src: S().asset_dir + "/portraits/" + w.portrait, alt: T("common.portrait_alt", { name: w.name }) });
 	}
@@ -290,6 +296,7 @@ Config.passages.nobr = false;
 	view.start = function (out) {
 		out.append(
 			el("div", { class: "hs-title" },
+				...logo("hs-crest"),
 				el("div", { class: "hs-series" }, T("start.series")),
 				el("h1", null, S().title),
 				el("p", { class: "hs-pitch" }, S().pitch)),
@@ -317,7 +324,7 @@ Config.passages.nobr = false;
 		out.append(
 			el("h2", null, T("hook.assignment")),
 			...paras(s.setting.player_role),
-			el("blockquote", { class: "hs-brief" }, ...paras(s.setting.briefing)),
+			el("blockquote", { class: "hs-brief" }, ...logo("hs-letterhead"), ...paras(s.setting.briefing)),
 			el("h3", null, T("hook.mystery")),
 			para(s.puzzle.mystery, "hs-mystery"),
 			el("h3", null, T("hook.ccc")));
@@ -339,7 +346,7 @@ Config.passages.nobr = false;
 		out.append(
 			el("h2", null, T("case.title")),
 			el("h3", null, T("case.mystery")), para(s.puzzle.mystery, "hs-mystery"),
-			el("h3", null, T("case.brief")), el("blockquote", { class: "hs-brief" }, ...paras(s.setting.briefing)),
+			el("h3", null, T("case.brief")), el("blockquote", { class: "hs-brief" }, ...logo("hs-letterhead"), ...paras(s.setting.briefing)),
 			el("h3", null, T("case.ccc")));
 		ccc(out, s);
 		out.append(actionRow(btn(T("common.return"), () => go(V().lastMain || "Map"))));
@@ -591,7 +598,7 @@ Config.passages.nobr = false;
 		const o = outcome();
 		const rs = rankingScore();
 		const fmt = x => (x % 1 ? x.toFixed(1) : String(x));
-		out.append(el("h2", null, T("ending.title")),
+		out.append(...logo("hs-crest"), el("h2", null, T("ending.title")),
 			el("div", { class: "hs-score" },
 				el("div", null, R("ending.verdict", { verdict: T("ending.verdict." + o) })),
 				el("div", null, R("ending.major", { n: v.majorClues })),
@@ -655,6 +662,9 @@ h3 { margin-top: 1.4em; font-size: 1.1em; color: var(--accent); }
 .hs-series { letter-spacing: .15em; text-transform: uppercase; font-size: .8em; color: var(--muted); }
 .hs-title h1 { font-size: 2.4em; margin: .2em 0; }
 .hs-pitch { max-width: 40em; margin: 0 auto; text-align: left; font-style: italic; }
+.hs-logo { display: block; height: auto; margin: 0 auto; }
+.hs-crest { width: 5.5em; margin-bottom: .6em; }
+.hs-letterhead { width: 3.5em; margin: .3em auto .6em; }
 .hs-map { width: 100%; max-width: 900px; display: block; margin: 1em auto; border: 1px solid var(--line); border-radius: 6px; }
 blockquote { margin: 1em 0; padding: .6em 1em; background: var(--panel); border-left: 4px solid var(--accent); }
 .hs-clause { font-style: italic; }

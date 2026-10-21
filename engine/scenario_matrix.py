@@ -283,7 +283,7 @@ def read_matrix(path, facts=None):
     s = SimpleNamespace(
         TITLE=setting("Title"), SCENARIO_ID=setting("Scenario ID"), IFID=setting("IFID"),
         FACTS=facts, QUESTION_BUDGET=facts.get("question_budget", 0), FOLLOWUP_BONUS=facts.get("followup_bonus", 0),
-        MAP=setting("Map", False) or "campus-map.png", PLAY_URL=setting("Play URL", False), PITCH=passages.get("pitch", ""),
+        MAP=setting("Map", False) or "campus-map.png", LOGO=setting("Logo", False), PLAY_URL=setting("Play URL", False), PITCH=passages.get("pitch", ""),
         PUZZLE={"mystery": my("The mystery"), "solution": my("The solution"),
                 "who_label": my("Person question"), "where_label": my("Place question"),
                 "final_answer": {"who": (correct["Person"] or [""])[0], "where": (correct["Place"] or [""])[0]},

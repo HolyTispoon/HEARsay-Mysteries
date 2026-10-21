@@ -54,6 +54,8 @@ def expected(s):
              ("the Hook: CCC", s.CONTROVERSY["name"]), ("the Hook: CCC summary", s.CONTROVERSY["summary"]),
              ("the Hook: Clause", s.CONTROVERSY["clause"]), ("the Hook: Clause explainer", s.CONTROVERSY["clause_explainer"]),
              ("Map file", s.MAP)]
+    if s.LOGO:
+        texts.append(("Logo file", s.LOGO))
     for q in s.QUESTIONS:
         texts += [(f"{q['id']} question", q["text"]), (f"{q['id']} angle", q["angle"]), (f"{q['id']} why it lands", q["tripwire_logic"])]
     for w in s.WITNESSES:
