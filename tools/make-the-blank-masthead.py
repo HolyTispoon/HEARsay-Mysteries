@@ -42,10 +42,7 @@ rule(20, 2); rule(28, 7)
 title = ImageFont.truetype(BODONI, 190 * S, index=2)
 tw = title.getlength("The Blank") / S
 top = title.getbbox("The Blank")[1] / S
-d.text(((W - tw) / 2 * S - 12 * S, (48 - top) * S), "The Blank", font=title, fill=NAVY)
-# A gold star at the top of the k, echoing the star over the U in the university logo
-k_right = (W + tw) / 2
-star(k_right + 16, 66, 15)
+d.text(((W - tw) / 2 * S, (48 - top) * S), "The Blank", font=title, fill=NAVY)
 
 # Tagline between two short rules with stars
 tag = ImageFont.truetype(DIDOT, 23 * S, index=2)
