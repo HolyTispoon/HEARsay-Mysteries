@@ -325,6 +325,7 @@ Config.passages.nobr = false;
 				el("div", { class: "hs-series" }, T("start.series")),
 				el("h1", null, S().title),
 				el("p", { class: "hs-pitch" }, S().pitch)),
+			el("img", { class: "hs-map", src: S().asset_dir + "/" + S().map, alt: T("common.map_alt") }),
 			...paras(T("start.intro")),
 			el("h3", null, T("start.hear_title")),
 			para(T("hear.intro")),
@@ -729,7 +730,7 @@ h3 { margin-top: 1.4em; font-size: 1.1em; color: var(--accent); }
 .hs-columns > p:first-child::first-letter { float: left; font-family: "Bodoni 72", Didot, Georgia, serif; font-size: 3.7em; line-height: .8; padding: .06em .08em 0 0; }
 @media (max-width: 30em) { .hs-columns { text-align: left; } }
 .hs-paper-quote { break-inside: avoid; margin: .2em 0 1em; text-align: left; hyphens: manual; font-style: italic; background: var(--news-ink); color: #fbf9f3; border-left: 4px solid var(--news-rule); }
-.hs-map { width: 100%; max-width: 900px; display: block; margin: 1em auto; border: 1px solid var(--line); border-radius: 6px; }
+.hs-map { width: 100%; max-width: 520px; display: block; margin: 1em auto; border: 1px solid var(--line); border-radius: 6px; }
 blockquote { margin: 1em 0; padding: .6em 1em; background: var(--panel); border-left: 4px solid var(--accent); }
 .hs-clause { font-style: italic; }
 .hs-mystery { font-weight: bold; }

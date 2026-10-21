@@ -75,7 +75,7 @@ The build is deterministic: rebuilding the game in a cloud session, with Tweego 
 
 ## Where builds run
 
-- **Cloud sessions (Claude):** a SessionStart hook (`.claude/hooks/session-start.sh`) installs Tweego 2.1.1, SugarCube 2.37.3, `openpyxl` and `python-docx`, so every session can build and run the regression check. The framework Doc is downloaded through the Drive connector like the other sources.
+- **Cloud sessions (Claude):** a SessionStart hook (`.claude/hooks/session-start.sh`) installs Tweego 2.1.1, SugarCube 2.37.3, `openpyxl`, `python-docx` and `pypdf`, so every session can build and run the regression check. It has no Chrome, so a cloud build stops if the newspaper article changed (its PDF needs reprinting); rebuild that on the Mac. The framework Doc is downloaded through the Drive connector like the other sources.
 - **The Mac:** as today (Tweego path and SugarCube folder in the Drive `CLAUDE.md`), run from the clone.
 - **GitHub (later, optional):** an Action that runs the checks on every pull request and fails if `docs/` is out of date.
 
