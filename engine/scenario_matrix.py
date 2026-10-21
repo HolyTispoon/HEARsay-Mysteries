@@ -6,7 +6,7 @@ Read a HEARsay scenario from its Response Matrix workbook (.xlsx) and check it.
 
 The workbook is the source the game is built from. read_matrix() returns the scenario plus a list of
 problems: missing fields, broken references, the framework's structural rules (tripwires, clue counts,
-receptiveness ranks, with the numbers taken from the Facts sheet of 'HEARsay game text.xlsx'), and places
+receptiveness ranks, with the numbers taken from the framework Doc's 'Game facts' tab), and places
 where the workbook disagrees with itself (the Grid against the Long table, 'Given by' columns, repeated set
 titles). Scenario text is filed under the framework's passage names (Passages sheet). Columns are found by
 their header, so their order does not matter.
@@ -87,13 +87,13 @@ def _ids(s):
 
 
 def read_matrix(path, facts=None):
-    """Return (scenario, errors). facts: the framework numbers (default: read from 'HEARsay game text.xlsx')."""
+    """Return (scenario, errors). facts: the framework numbers (default: read from the framework's 'Game facts' tab)."""
     errors = []
     if facts is None:
         from game_text import read_game_text
         g, gerr = read_game_text()
         if gerr:
-            errors.append(f"HEARsay game text.xlsx has problems ({len(gerr)}; run game_text.py)")
+            errors.append(f"The game text has problems ({len(gerr)}; run game_text.py)")
         facts = g.facts
     wb = load_workbook(path, data_only=True)
 

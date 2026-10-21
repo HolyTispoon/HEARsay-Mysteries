@@ -4,7 +4,7 @@ The sources of truth and the repository's copies of them.
 
 The sources of truth live in Google Drive, outside this repository, and only the author edits them:
   - the framework Google Doc "HEARsay mysteries" (the build checks the game text against it, and takes the game's
-    rules and HEAR guide from two of its tabs);
+    rules, HEAR guide, the framework's numbers and some of the game text from four of its tabs);
   - the game text Google Sheet "HEARsay game text";
   - for each scenario, its Response Matrix (a Google Sheet) and its Scenario Packet (a Google Doc).
 Their addresses are in engine/sources.json and scenarios/<id>/sources.json.

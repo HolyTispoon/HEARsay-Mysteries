@@ -24,10 +24,10 @@ A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Sav
 | Path | What it is |
 |---|---|
 | `engine/hearsay_engine.twee` | The game engine: SugarCube passages, JavaScript and CSS. The same for every scenario; it holds no player-facing text. |
-| `engine/HEARsay game text.xlsx` | A read-only copy of the Google Sheet [HEARsay game text](https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit), which is the source: the game's own text (headings, buttons, prompts), filed under the framework's passage names, and the framework's numbers (8 witnesses, 20 Clues, the question budget …). The same for every scenario. Only the build updates the copy. |
-| `engine/HEARsay mysteries.docx` | A read-only copy of the framework Google Doc [HEARsay mysteries](https://docs.google.com/document/d/1q2QzVFRMtBDEl7KbaLdKgp_xrxrseyejLyNDNfUky3Y/edit). The build checks the game text against it and takes the game's rules and HEAR guide from its "Rules of the game" and "HEAR Framework introduction" tabs. Only the build updates the copy. |
+| `engine/HEARsay game text.xlsx` | A read-only copy of the Google Sheet [HEARsay game text](https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit), which is the source: the game's own headings, buttons and labels, filed under the framework's passage names. The same for every scenario. Only the build updates the copy. |
+| `engine/HEARsay mysteries.docx` | A read-only copy of the framework Google Doc [HEARsay mysteries](https://docs.google.com/document/d/1q2QzVFRMtBDEl7KbaLdKgp_xrxrseyejLyNDNfUky3Y/edit). The build checks the game text against it, and takes from its tabs the game's rules ("Rules of the game"), the HEAR guide ("HEAR Framework introduction"), the framework's numbers ("Game facts": 8 witnesses, 16 Clues, the question budget …) and the sentences that restate the framework ("Game text"). The same for every scenario. Only the build updates the copy. |
 | `engine/build.py` | Build script: runs the checks below, adds each scenario and the game text to the engine, compiles each game with Tweego into `docs/`, and writes the landing page. |
-| `engine/game_text.py`, `engine/check_framework.py` | Read the game text (the Sheet, and the rules and HEAR guide from the framework's tabs), and check it against the framework document. |
+| `engine/game_text.py`, `engine/check_framework.py` | Read the game text and the framework's numbers (from the framework's tabs and the Sheet), and check them against the framework document. |
 | `engine/scenario_matrix.py` | Reads a Response Matrix and checks the framework's rules (tripwires, clue counts, receptiveness ranks) and that the workbook agrees with itself. |
 | `engine/check_packet.py` | Checks that a scenario packet says the same things as its Response Matrix. |
 | `engine/sources.py`, `engine/sources.json`, `scenarios/<id>/sources.json` | Where the sources of truth are in Google Drive, and how the build updates the repository's copies from downloads of them. |
@@ -43,7 +43,15 @@ A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Sav
 
 ## Rebuild after editing
 
-The sources of truth are Google Docs and Sheets in the Drive folder "HEARsay mystery game", not files in this repository, and only the author edits them: the framework Doc "HEARsay mysteries", the game text Sheet "HEARsay game text", and each scenario's Response Matrix (Sheet) and Scenario Packet (Doc). Edit a scenario's matrix and make the same change in its packet; edit the game text Sheet to change the game's own text in every scenario, and the framework Doc's "Rules of the game" tab (a heading, then one paragraph per rule) or "HEAR Framework introduction" tab (a heading and an introduction, a heading and a paragraph for each of H, E, A and R, then a paragraph on unreceptive language) to change the rules or the HEAR guide. `{curly}` words in them are filled in by the game, as in the Sheet.
+The sources of truth are Google Docs and Sheets in the Drive folder "HEARsay mystery game", not files in this repository, and only the author edits them: the framework Doc "HEARsay mysteries", the game text Sheet "HEARsay game text", and each scenario's Response Matrix (Sheet) and Scenario Packet (Doc). Edit a scenario's matrix and make the same change in its packet. To change the game in every scenario, edit the framework Doc's tabs or the game text Sheet:
+
+- "Rules of the game": a heading, then one paragraph per rule.
+- "HEAR Framework introduction": a heading and an introduction, a heading and a paragraph for each of H, E, A and R, then a paragraph on unreceptive language.
+- "Game facts": a table (Key, Fact, Value, Framework wording, Framework section) of the framework's numbers. Each fact's wording must appear elsewhere in the Doc and contain its value; a fact with no wording is an engine choice the Doc doesn't state.
+- "Game text": a table (Key, Screen, Text, Placeholders) of the game's sentences that restate the framework.
+- The Sheet's Text sheet: everything else the game shows (headings, buttons, labels); its Passages sheet lists the screens.
+
+`{curly}` words are filled in by the game, and bold words are shown in bold. A key can come from only one place.
 
 To rebuild, download them (File → Download → Microsoft Excel for the Sheets, Microsoft Word for the Docs) into one folder, keeping their names, and pass that folder with `--downloads`. The build checks every download first and stops, copying nothing, if one has a problem. Then it replaces each copy in the repository whose content changed, and builds. Commit the changed copies with the rebuilt `docs/`.
 

@@ -51,7 +51,7 @@ python3 engine/build.py                     # every scenario, then the landing p
 python3 engine/build.py commons-comma       # one scenario, then the landing page
 ```
 
-The checks stay exactly as they are and run per scenario: game text against the framework export, engine text keys, matrix against the Facts sheet and itself, packet against matrix. A failure in one scenario stops the build.
+The checks stay exactly as they are and run per scenario: game text against the framework export, engine text keys, matrix against the framework's numbers and itself, packet against matrix. A failure in one scenario stops the build.
 
 What changed in `build_twine.py` (renamed `build.py`):
 
@@ -91,7 +91,7 @@ HEARsay mystery game/
   Archive/                        gains Twine engine/, the old The Commons' Comma/ folder, Claude outputs/
 ```
 
-- The sources of truth are the Google Docs and Sheets, outside the repository, and the author edits them, or asks Claude to make a specific change (as suggestions in the Docs, decided 2026-10-21): the framework Doc, the game text Sheet, and each scenario's matrix (Sheet) and packet (Doc) in the scenario's Drive folder. The repository keeps read-only copies of the framework Doc, the Sheets and the packets, which the build reads (since 2026-10-21 the game's rules and HEAR guide come from two tabs of the framework Doc rather than the Sheet); `engine/sources.json` and `scenarios/<id>/sources.json` record where the originals are.
+- The sources of truth are the Google Docs and Sheets, outside the repository, and the author edits them, or asks Claude to make a specific change (as suggestions in the Docs, decided 2026-10-21): the framework Doc, the game text Sheet, and each scenario's matrix (Sheet) and packet (Doc) in the scenario's Drive folder. The repository keeps read-only copies of the framework Doc, the Sheets and the packets, which the build reads (since 2026-10-21 the game's rules, HEAR guide, the framework's numbers and the sentences that restate the framework come from four tabs of the framework Doc rather than the Sheet); `engine/sources.json` and `scenarios/<id>/sources.json` record where the originals are.
 - On the Mac, Google Drive for desktop syncs the clone, with the folder set to "Available offline" so git works on local files.
 - Changes merged on GitHub (including Claude's) reach Drive when you run `bash tools/update-drive.sh` on the Mac. It fetches `main`, lists the commits and every file it would add, change or delete, and updates only after you confirm (`--check` only lists). It only touches files git tracks inside `HEARsay-Mysteries/`, never pushes, and refuses without changing anything if the clone isn't on `main`, has uncommitted edits to tracked files, or has commits GitHub doesn't. (Until 2026-10-21 a launchd job pulled every 10 minutes; the author decided against it, and `setup-drive-clone.sh` now removes it.)
 - Your edits reach GitHub when you commit and push them (GitHub Desktop: one commit, one push). Nothing pushes automatically.

@@ -9,10 +9,10 @@ holding the copies of its Response Matrix (.xlsx) and Scenario Packet (.docx), s
 addresses) and assets/ (the portraits and the campus map).
 
 The sources of truth are Google Docs and Sheets in Drive that only the author edits (see sources.py):
-  - the framework Google Doc ("HEARsay mysteries"): the game's structure and rules, and in its 'Rules of the game'
-    and 'HEAR Framework introduction' tabs the text of the game's rules and HEAR guide;
-  - the game text Google Sheet ("HEARsay game text"): the rest of the game's own text and the framework's numbers,
-    checked against the framework;
+  - the framework Google Doc ("HEARsay mysteries"): the game's structure and rules, and in four of its tabs the
+    game's rules, HEAR guide, the framework's numbers and the sentences that restate the framework (game_text.py);
+  - the game text Google Sheet ("HEARsay game text"): the rest of the game's own text (headings, buttons, labels)
+    and the list of screens;
   - each scenario's Response Matrix (Google Sheet): the scenario, checked against the framework's numbers;
   - each scenario's packet (Google Doc): the scenario written up for people, checked against the matrix.
 The build reads the repository's copies of them (engine/HEARsay mysteries.docx for the framework).
@@ -21,8 +21,8 @@ Steps:
   0. With --downloads, a folder holding downloads of the Google files (Sheets as .xlsx, Docs as .docx, named as in
      Drive): checks them all, then replaces each copy whose content differs. A download with problems stops the
      build and nothing is copied. Copies with no download are used as they are, with a warning.
-  1. Reads the game text (the Sheet, and the rules and HEAR guide from the framework's tabs) and checks it against
-     the framework (check_framework.py).
+  1. Reads the game text and the framework's numbers (the framework's tabs and the Sheet) and checks them against
+     the rest of the framework (check_framework.py).
   2. Checks that every text the engine asks for is in the game text workbook.
   3. For each scenario: reads the matrix and stops if it breaks a framework rule or disagrees with itself
      (scenario_matrix.py), and checks that the packet says the same things as the matrix (check_packet.py).
