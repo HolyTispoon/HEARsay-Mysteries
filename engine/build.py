@@ -29,8 +29,9 @@ Steps:
      (scenario_matrix.py), and checks that the packet says the same things as the matrix (check_packet.py).
   4. Writes docs/<Scenario ID>/source/story.twee (Twee 3), with the scenario and the game text written into the
      engine as `setup.scenario` and `setup.gameText`, and compiles it with Tweego into docs/<Scenario ID>/index.html.
-  5. Copies the scenario's portraits, map and logo (if it has one), and the site icons (ICONS), into
-     docs/<Scenario ID>/assets/; a logo not in the scenario's assets/ is looked for in SHARED_ASSETS;
+     The newspaper article, if the packet has a 'Newspaper article' tab, comes from the packet (packet_article).
+  5. Copies the scenario's portraits, map, logo and masthead (if it has them), and the site icons (ICONS), into
+     docs/<Scenario ID>/assets/; a logo or masthead not in the scenario's assets/ is looked for in SHARED_ASSETS;
      head.html links the icons from the page's <head>.
   6. Writes the landing page, docs/index.html, from landing.html and every built scenario.
 Every check stops the build and lists each problem. GitHub Pages serves docs/.
@@ -49,7 +50,7 @@ SCENARIOS = os.path.join(ROOT, "scenarios")
 DOCS = os.path.join(ROOT, "docs")  # the published site
 sys.path.insert(0, HERE)
 from scenario_matrix import read_matrix, PASSAGE_PARTS
-from check_packet import check as check_packet
+from check_packet import check as check_packet, norm, packet_article
 from game_text import read_game_text, DEFAULT as GAME_TEXT
 from sources import update_copies
 from check_framework import check as check_framework, find_export
@@ -59,7 +60,7 @@ ENGINE = os.path.join(HERE, "hearsay_engine.twee")
 HEAD = os.path.join(HERE, "head.html")
 LANDING = os.path.join(HERE, "landing.html")  # the site's landing page; {{SCENARIOS}} becomes the list of games
 ICONS = ("favicon.svg", "favicon-32.png", "apple-touch-icon.png")
-# Images more than one scenario may use, such as a university's logo. A scenario's own assets/ come first.
+# Images more than one scenario may use, such as a university's logo or its newspaper's masthead. A scenario's own assets/ come first.
 SHARED_ASSETS = os.path.join(HERE, "shared-assets")
 # Text keys the engine builds at run time rather than naming outright
 DYNAMIC_KEYS = re.compile(r"^(rules\.\d+|hear\.[HEAR]\.(move|text)|result\.\w+|ending\.verdict\.\w+)$")
@@ -125,11 +126,22 @@ def find_packet(matrix_path):
     found = [p for p in glob.glob(os.path.join(os.path.dirname(os.path.abspath(matrix_path)), "*.docx"))
              if "packet" in os.path.basename(p).lower() and not os.path.basename(p).startswith("~$")]
     if len(found) != 1:
-        sys.exit(f"Expected one packet .docx next to the matrix, found {len(found)}. Name it with --packet, or pass --no-packet-check.")
+        sys.exit(f"Expected one packet .docx next to the matrix, found {len(found)}. The build reads the packet even with --no-packet-check, for its newspaper article.")
     return found[0]
 
 
-def scenario_json(d, asset_dir="assets"):
+def article_json(d, article):
+    """The packet's article for the game. A paragraph that quotes the matrix's Clause is marked as a quote; letters
+    and digits are compared, so quotation marks and a "(,)" don't matter."""
+    if not article:
+        return None
+    bare = lambda t: re.sub(r"\W+", "", t).lower()
+    clause = bare(d.CONTROVERSY["clause"])
+    quote = lambda t: bool(clause) and bare(t) == clause
+    return dict(article, paragraphs=[{"text": t, "quote": quote(t)} for t in article["paragraphs"]])
+
+
+def scenario_json(d, article=None, asset_dir="assets"):
     p = d.PUZZLE
     for key in ("who", "where"):
         opts = p[f"{key}_options"]
@@ -145,6 +157,8 @@ def scenario_json(d, asset_dir="assets"):
         "asset_dir": asset_dir,
         "map": d.MAP,
         "logo": d.LOGO,
+        "masthead": d.MASTHEAD,
+        "article": article_json(d, article),
         "rank_exact": d.FACTS["rank_exact"],
         "rank_near": d.FACTS["rank_near"],
         "puzzle": {
@@ -213,15 +227,19 @@ def build_scenario(sid, g, no_packet_check):
     d = load(matrix, g.facts)
     if d.SCENARIO_ID != sid:
         sys.exit(f"The matrix's Scenario ID is '{d.SCENARIO_ID}', but its folder is scenarios/{sid}/. Make them the same.")
+    packet = find_packet(matrix)
     if no_packet_check:
         print("Skipping the packet check (--no-packet-check).")
     else:
-        packet = find_packet(matrix)
         problems = check_packet(matrix, packet)
         if problems:
             sys.exit(f"The packet ({os.path.basename(packet)}) disagrees with the matrix; make them match before building:\n"
                      + "\n".join(" - " + p for p in problems))
         print(f"Packet OK: {os.path.basename(packet)} matches the matrix")
+    article, problems = packet_article(packet)
+    if problems:
+        sys.exit(f"The packet's newspaper article can't be read:\n" + "\n".join(" - " + p for p in problems))
+    print(f"Newspaper article: {article['headline']}" if article else "No newspaper article in the packet")
 
     out = os.path.join(DOCS, sid)
     shutil.rmtree(out, ignore_errors=True)  # a clean build: nothing left over from an earlier one
@@ -229,13 +247,14 @@ def build_scenario(sid, g, no_packet_check):
     for w in d.WITNESSES:
         copy(find_file(assets, w["portrait"]), os.path.join(out, "assets", "portraits", w["portrait"]))
     copy(find_file(assets, d.MAP), os.path.join(out, "assets", d.MAP))
-    if d.LOGO:
-        own = os.path.join(assets, d.LOGO)
-        copy(own if os.path.exists(own) else find_file(SHARED_ASSETS, d.LOGO), os.path.join(out, "assets", d.LOGO))
+    for fn in (d.LOGO, d.MASTHEAD):
+        if fn:
+            own = os.path.join(assets, fn)
+            copy(own if os.path.exists(own) else find_file(SHARED_ASSETS, fn), os.path.join(out, "assets", fn))
     for fn in ICONS:
         copy(os.path.join(HERE, fn), os.path.join(out, "assets", fn))
 
-    data = json.dumps(scenario_json(d), ensure_ascii=False).replace("</", "<\\/")
+    data = json.dumps(scenario_json(d, article), ensure_ascii=False).replace("</", "<\\/")
     header = (
         f":: StoryTitle\n{d.TITLE}\n\n\n"
         ":: StoryData\n" + json.dumps({"ifid": d.IFID, "format": "SugarCube", "format-version": "2.37.3",

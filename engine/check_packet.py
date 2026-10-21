@@ -10,7 +10,8 @@ options), this looks for the same words in the packet. It also checks each answe
 label ("Q1 [C02, clue; opinion receptive]"), the ranking order and the question budget. Curly and straight quotes
 and line breaks are treated as the same. Prose that exists only in the packet (the timeline, the positions,
 the hidden payoff) is not checked, and neither are the Start summary and the two final-answer questions,
-which the packet words differently.
+which the packet words differently. The packet's 'Newspaper article' tab is the one piece of the game that comes
+from the packet rather than the matrix; packet_article() reads it.
 
 Needs openpyxl and python-docx (pip3 install openpyxl python-docx).
 """
@@ -46,6 +47,38 @@ def packet_paragraphs(path):
     return out
 
 
+ARTICLE_TAB = "Newspaper article"  # the packet tab whose text the game shows as the Newspaper passage
+
+
+def packet_article(path):
+    """The packet's newspaper article, or None if the packet has no 'Newspaper article' tab.
+
+    The tab (exported as a Title paragraph with the tab's name) holds a heading (the headline), then the deck,
+    a line starting "By " (the byline) and the paragraphs of the story, up to the next tab. Returns
+    ({"headline", "deck", "byline", "paragraphs"}, problems)."""
+    tab, inside = [], False
+    for p in docx.Document(path).paragraphs:
+        if p.style.name == "Title":
+            if inside:
+                break
+            inside = " ".join(p.text.split()) == ARTICLE_TAB
+            continue
+        t = " ".join(p.text.split())
+        if inside and t:
+            tab.append((p.style.name, t))
+    if not tab:
+        return None, []
+    head = next((i for i, (style, _) in enumerate(tab) if style.startswith("Heading")), None)
+    by = next((i for i, (_, t) in enumerate(tab) if t.startswith("By ")), None)
+    if head is None or by is None or by != head + 2:
+        return None, [f"The '{ARTICLE_TAB}' tab must start with a heading (the headline), then one paragraph (the deck), "
+                      "then the byline ('By …'), then the story"]
+    body = [t for _, t in tab[by + 1:]]
+    if not body:
+        return None, [f"The '{ARTICLE_TAB}' tab has no story after the byline"]
+    return {"headline": tab[head][1], "deck": tab[head + 1][1], "byline": tab[by][1], "paragraphs": body}, []
+
+
 def expected(s):
     """(label, text) pairs the packet must contain, and (label, regex) pairs for labels whose layout can vary."""
     W = {w["id"]: w for w in s.WITNESSES}
@@ -56,6 +89,8 @@ def expected(s):
              ("Map file", s.MAP)]
     if s.LOGO:
         texts.append(("Logo file", s.LOGO))
+    if s.MASTHEAD:
+        texts.append(("Masthead file", s.MASTHEAD))
     for q in s.QUESTIONS:
         texts += [(f"{q['id']} question", q["text"]), (f"{q['id']} angle", q["angle"]), (f"{q['id']} why it lands", q["tripwire_logic"])]
     for w in s.WITNESSES:
