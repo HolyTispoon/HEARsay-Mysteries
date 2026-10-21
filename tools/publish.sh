@@ -12,7 +12,8 @@
 #      scenario's matrix and packet), waits for the downloads to land in ~/Downloads, and moves them into a new
 #      folder in ~/.cache/hearsay-publish/downloads.
 #   3. Builds in its own copy of the repository (~/.cache/hearsay-publish/HEARsay-Mysteries, reset to GitHub's main
-#      each run), never in the Drive clone. The build runs every check and stops if one fails.
+#      each run), never in the Drive clone. The build runs every check and stops if one fails. If this script is
+#      older than main's copy of it, main's copy takes over from here, so the script always matches the code.
 #   4. Lists every file the rebuild changed. If nothing changed, it stops there.
 #   5. Publishes: commits to a new branch, opens a pull request, and merges it into main. GitHub Pages serves the
 #      new games a minute or two later.
@@ -21,6 +22,7 @@
 # Needs the GitHub CLI signed in (gh auth status), and your browser signed in to the Google account that owns the files.
 set -euo pipefail
 
+args=("$@")
 downloads=""
 check_only=false
 while [ $# -gt 0 ]; do
@@ -31,7 +33,8 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-here="$(cd "$(dirname "$0")" && pwd)"
+# the tools folder this was started from (the Drive clone's, usually), kept when main's copy takes over below
+here="${HEARSAY_PUBLISH_HERE:-$(cd "$(dirname "$0")" && pwd)}"
 tools="$HOME/.cache/hearsay-build-tools"
 work="$HOME/.cache/hearsay-publish"
 repo="$work/HEARsay-Mysteries"
@@ -83,6 +86,13 @@ echo "Fetching main from GitHub …"
 g fetch --quiet origin main
 g switch --quiet --force -C main origin/main
 g clean --quiet -fd
+
+# an out-of-date copy of this script (an old Drive clone) hands over to main's, which matches the code it builds
+if [ -z "${HEARSAY_PUBLISH_HERE:-}" ] && ! cmp -s "$0" "$repo/tools/publish.sh"; then
+  echo "Running main's newer copy of publish.sh …"
+  # ${a[@]+…}: macOS's bash 3.2 calls an empty array unbound under set -u
+  HEARSAY_PUBLISH_HERE="$here" exec bash "$repo/tools/publish.sh" ${args[@]+"${args[@]}"}
+fi
 
 # 2. downloads
 if [ -z "$downloads" ]; then
