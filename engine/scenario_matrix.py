@@ -307,7 +307,7 @@ def _ids_given(s):
 
 
 def structural_errors(d, f):
-    """The framework's structural rules, with the numbers from the Facts sheet (f)."""
+    """The framework's structural rules, with the numbers from the framework's Game facts (f)."""
     errors = []
     N_WITNESSES, N_QUESTIONS, N_CLUES, N_RED_HERRINGS, N_MAJOR = f["witnesses"], f["questions"], f["clues"], f["red_herrings"], f["major_clues"]
     CLUES_PER_WITNESS, RH_PER_WITNESS, CLUES_PER_MAJOR = f["clues_per_witness"], f["red_herrings_per_witness"], f["clues_per_major"]

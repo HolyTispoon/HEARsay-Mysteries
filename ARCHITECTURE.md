@@ -52,7 +52,7 @@ python3 engine/build.py                     # every scenario, then the landing p
 python3 engine/build.py commons-comma       # one scenario, then the landing page
 ```
 
-The checks stay exactly as they are and run per scenario: game text against the framework export, engine text keys, matrix against the framework's numbers and itself, packet against matrix. A failure in one scenario stops the build.
+The checks stay exactly as they are and run per scenario: game text against the framework Doc, engine text keys, matrix against the framework's numbers and itself, packet against matrix. A failure in one scenario stops the build.
 
 What changed in `build_twine.py` (renamed `build.py`):
 
