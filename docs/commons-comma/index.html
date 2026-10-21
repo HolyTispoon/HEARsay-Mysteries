@@ -404,7 +404,7 @@ Config.passages.nobr = false;
 				el("h1", null, S().title),
 				el("p", { class: "hs-pitch" }, S().pitch)),
 			el("img", { class: "hs-map", src: S().asset_dir + "/" + S().map, alt: T("common.map_alt") }),
-			para(T("start.intro")),
+			...paras(T("start.intro")),
 			el("h3", null, T("start.hear_title")),
 			para(T("hear.intro")),
 			hearList(),
