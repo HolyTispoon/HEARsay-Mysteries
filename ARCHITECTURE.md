@@ -82,6 +82,7 @@ The build is deterministic: rebuilding the game in a cloud session, with Tweego 
 HEARsay mystery game/
   HEARsay mysteries               the framework Google Doc (Author only)
   HEARsay mysteries.docx          its export, read by the build's framework check
+  HEARsay game text               the game text Google Sheet (the source; engine/HEARsay game text.xlsx is its snapshot)
   CLAUDE.md                       Drive notes; points to the repository for everything in it
   Section 5 draft – ….md
   HEARsay-Mysteries/              the git clone: engine/, scenarios/, docs/
@@ -93,12 +94,13 @@ HEARsay mystery game/
 - A scheduled job on the Mac runs `git pull --ff-only` every 10 minutes while the clone is on `main`. Changes merged on GitHub (including Claude's) then appear in Drive without anyone moving files. It stops by itself (does nothing) if the clone has diverged, so it can't overwrite your edits.
 - Your edits reach GitHub when you commit and push them (GitHub Desktop: one commit, one push). Nothing pushes automatically.
 - Source art lives in the repository, in `scenarios/<id>/source-art/`.
+- The game's own text is edited in the Google Sheet [HEARsay game text](https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit) (from 2026-10-21). The build reads `engine/HEARsay game text.xlsx`, a snapshot of the Sheet: given an .xlsx export of the Sheet (`--game-text`, or a `HEARsay game text*.xlsx` in the repository folder or the folder above it), it replaces the snapshot when the cell values differ, after checking the export. The snapshot is committed with the rebuilt `docs/`, so every change to the text shows in a pull request. The build can't download the Sheet itself: it has no Google credentials. In a Claude session the Drive connector exports it; on the Mac, File → Download → Microsoft Excel.
 
 ## Migration, in order
 
 1. **Restructure.** Done in this pull request: files moved with `git mv`, the build changed as above, the landing page, `README.md` and `CLAUDE.md` rewritten. Verified byte for byte (see Build).
 2. **Publish.** Done: the repository is renamed `HEARsay-Mysteries`. Still to do, by the author, right after merging: Settings → Pages → Build and deployment → Branch `main`, folder `/docs` → Save. Until then the site shows the repository root, which no longer holds a game.
-3. **Drive.** On the Mac, run `tools/setup-drive-clone.sh` (it clones into Drive and installs the scheduled pull). Then move `The Commons' Comma/Assets/` into the clone as `scenarios/commons-comma/source-art/` and commit it, and move `Twine engine/`, the rest of `The Commons' Comma/` and `Claude outputs/` to `Archive/`; Claude can do the Drive moves. As of 2026-10-15 every engine, matrix and packet file in those folders matches the repository in size. Update the Drive `CLAUDE.md`.
+3. **Drive.** Done 2026-10-21: `tools/setup-drive-clone.sh` cloned the repository into Drive as `HEARsay-Mysteries/` and installed the scheduled pull. The pull is blocked until `/bin/bash` has Full Disk Access (System Settings → Privacy & Security → Full Disk Access); the log says "Operation not permitted" until then. Still to do: move `The Commons' Comma/Assets/` into the clone as `scenarios/commons-comma/source-art/` and commit it, and move `Twine engine/`, the rest of `The Commons' Comma/` and `Claude outputs/` to `Archive/`; Claude can do the Drive moves. As of 2026-10-15 every engine, matrix and packet file in those folders matches the repository in size. Update the Drive `CLAUDE.md`.
 4. **Cloud builds.** Done: `.claude/hooks/session-start.sh`.
 5. **Optional:** a check on GitHub that runs the build's checks on every pull request and fails if `docs/` is out of date.
 

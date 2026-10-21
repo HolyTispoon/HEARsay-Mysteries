@@ -24,7 +24,7 @@ A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Sav
 | Path | What it is |
 |---|---|
 | `engine/hearsay_engine.twee` | The game engine: SugarCube passages, JavaScript and CSS. The same for every scenario; it holds no player-facing text. |
-| `engine/HEARsay game text.xlsx` | The game's own text (rules, HEAR guide, headings, buttons), filed under the framework's passage names, and the framework's numbers (8 witnesses, 20 Clues, the question budget …). The same for every scenario. |
+| `engine/HEARsay game text.xlsx` | A snapshot of the Google Sheet [HEARsay game text](https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit), which is the source: the game's own text (rules, HEAR guide, headings, buttons), filed under the framework's passage names, and the framework's numbers (8 witnesses, 20 Clues, the question budget …). The same for every scenario. The build updates the snapshot; don't edit it. |
 | `engine/build.py` | Build script: runs the checks below, adds each scenario and the game text to the engine, compiles each game with Tweego into `docs/`, and writes the landing page. |
 | `engine/game_text.py`, `engine/check_framework.py` | Read the game text, and check it against an export of the framework document. |
 | `engine/scenario_matrix.py` | Reads a Response Matrix and checks the framework's rules (tripwires, clue counts, receptiveness ranks) and that the workbook agrees with itself. |
@@ -40,16 +40,18 @@ A game takes about 45 to 75 minutes. Progress can be saved from the sidebar (Sav
 
 ## Rebuild after editing
 
-Edit a scenario's Response Matrix and make the same change in its packet, then rebuild. To change the game's own text, edit `engine/HEARsay game text.xlsx`; that changes every scenario, so rebuild them all.
+Edit a scenario's Response Matrix and make the same change in its packet, then rebuild. To change the game's own text, edit the Google Sheet [HEARsay game text](https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit), in the Drive folder "HEARsay mystery game"; that changes every scenario, so rebuild them all. `engine/HEARsay game text.xlsx` is a snapshot of the Sheet that the build reads. Don't edit it: download the Sheet (File → Download → Microsoft Excel) and pass the download with `--game-text`, or save it in the folder above the repository, and the build replaces the snapshot when the text has changed. Commit the snapshot with the rebuilt `docs/`.
 
 Requirements: Python 3.8+ with `openpyxl` and `python-docx` (`pip3 install openpyxl python-docx`; add `pypdf` to read a PDF export of the framework), and [Tweego](https://www.motoslave.net/tweego/) 2.1+ with SugarCube 2.37.3. Put `tweego` on your PATH, or set `TWEEGO=/path/to/tweego`; if its bundled SugarCube is older, set `TWEEGO_PATH` to a folder holding a `sugarcube-2` folder of version 2.37.3.
 
 From the repository root:
 
 ```
-python3 engine/build.py                  # every scenario
-python3 engine/build.py commons-comma    # one scenario
+python3 engine/build.py --game-text "HEARsay game text.xlsx"                  # every scenario
+python3 engine/build.py commons-comma --game-text "HEARsay game text.xlsx"    # one scenario
 ```
+
+Without an export of the Sheet the build uses the snapshot as it is and warns that it may be behind the Sheet. An export with problems (a blank key, an unknown Check, a missing fact …) stops the build and leaves the snapshot alone.
 
 The build stops if a matrix breaks a rule or disagrees with itself, if a packet disagrees with its matrix, if a matrix's Scenario ID differs from its folder name, or if two scenarios share an IFID, and it lists each problem. The game text is also checked against the framework document when an export of it is available (pass `--framework "HEARsay mysteries.docx"`, or put the export in the folder above the repository); the framework is not part of this repository, so otherwise that check is skipped with a warning. Open `docs/index.html` to test, then commit the rebuilt `docs/` with your change.
 

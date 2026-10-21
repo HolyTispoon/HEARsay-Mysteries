@@ -4,11 +4,15 @@ Read the game's own text and the framework's numbers from 'HEARsay game text.xls
 
     python3 game_text.py ["HEARsay game text.xlsx"]
 
+The source of truth is the Google Sheet "HEARsay game text" (SHEET_URL). 'HEARsay game text.xlsx' next to this
+script is a snapshot of it: build.py replaces it with an .xlsx export of the Sheet (--game-text) whenever the
+export's contents differ. Nobody edits the snapshot by hand.
+
 read_game_text() returns (game_text, errors). game_text.text maps each key to its text, game_text.facts maps each
 fact key to its value, and game_text.rows / .passages / .fact_rows keep the full rows for check_framework.py.
 Needs openpyxl (pip3 install openpyxl).
 """
-import os, re, sys
+import glob, os, re, sys
 from types import SimpleNamespace
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -19,7 +23,9 @@ try:
 except ImportError:
     sys.exit("This needs openpyxl: pip3 install openpyxl")
 
-DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HEARsay game text.xlsx")
+DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HEARsay game text.xlsx")  # the snapshot
+SHEET_ID = "111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 # Placeholders every text can use; the engine fills them from the scenario and the facts.
 GLOBAL_PLACEHOLDERS = {"budget", "n_witnesses", "n_questions", "n_major", "bonus", "rank_exact", "rank_near", "ccc", "title"}
 CHECKS = {"verbatim", "paraphrase", "label"}
@@ -73,6 +79,33 @@ def read_game_text(path=DEFAULT):
         if k not in facts:
             errors.append(f"Facts: '{k}' is missing")
     return SimpleNamespace(text=text, facts=facts, rows=rows, passages=passages, fact_rows=list(fact_rows.values())), errors
+
+
+def workbook_values(path):
+    """Every sheet's cell values, without trailing empty rows and cells, to compare an export with the snapshot."""
+    wb = load_workbook(path, data_only=True)
+    out = {}
+    for ws in wb:
+        rows = [[None if v == "" else v for v in r] for r in ws.iter_rows(values_only=True)]
+        rows = [r[:max([i + 1 for i, v in enumerate(r) if v is not None], default=0)] for r in rows]
+        while rows and not rows[-1]:
+            rows.pop()
+        out[ws.title] = rows
+    return out
+
+
+def find_export(folder):
+    """The newest 'HEARsay game text*.xlsx' export of the Sheet in folder, and a note if the Sheet changed after it."""
+    found = [p for p in glob.glob(os.path.join(folder, "HEARsay game text*.xlsx")) if not os.path.basename(p).startswith("~$")]
+    if not found:
+        return None, None
+    path = max(found, key=os.path.getmtime)
+    note = None
+    gsheet = glob.glob(os.path.join(folder, "HEARsay game text*.gsheet"))
+    if gsheet and os.path.getmtime(gsheet[0]) > os.path.getmtime(path) + 60:
+        note = (f"The Google Sheet looks newer than the export {os.path.basename(path)}. If the Sheet has changed, "
+                "export it again (File → Download → Microsoft Excel) so the build uses the current text.")
+    return path, note
 
 
 def main():
