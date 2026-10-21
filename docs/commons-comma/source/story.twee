@@ -325,7 +325,6 @@ Config.passages.nobr = false;
 				el("div", { class: "hs-series" }, T("start.series")),
 				el("h1", null, S().title),
 				el("p", { class: "hs-pitch" }, S().pitch)),
-			el("img", { class: "hs-map", src: S().asset_dir + "/" + S().map, alt: T("common.map_alt") }),
 			...paras(T("start.intro")),
 			el("h3", null, T("start.hear_title")),
 			para(T("hear.intro")),
@@ -694,6 +693,15 @@ body { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; font
 #menu li a:hover { background: #e4d6b8; color: var(--ink); }
 #menu ul { border-color: var(--line); }
 #menu li:not(:first-child) { border-top-color: var(--line); }
+#ui-dialog { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; }
+#ui-dialog-titlebar { background: #efe5cf; color: var(--ink); border-bottom: 1px solid var(--line); }
+#ui-dialog-title, #ui-dialog-close { color: var(--ink); }
+#ui-dialog-close:hover { background: #e4d6b8; color: var(--accent); }
+#ui-dialog-body { background: var(--paper); color: var(--ink); border: none; }
+#ui-dialog-body button { font-family: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .4em 1em; }
+#ui-dialog-body button:hover { border-color: var(--accent); background: #fff; }
+#ui-dialog-body #restart-ok { background: var(--accent); color: #fff; border-color: var(--accent); }
+#ui-overlay { background: var(--ink); }
 #story { margin-right: 2em; }
 #passages { max-width: 60em; }
 .passage { font-size: 1em; }
