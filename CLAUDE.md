@@ -10,11 +10,11 @@ Every source of truth is a Google Doc or Sheet in the Drive folder "HEARsay myst
 - Google Sheets have no suggestion mode, so changes there are direct: keep a copy of the cells you replace, and list every changed cell (old → new) in your reply so the author can check and revert them.
 - Afterwards, download the file and check it with the build. A Doc's pending suggestions are not in its download until the author accepts them, so build only after that. Without that request, the only thing you may add is a suggestion or comment pointing out a typo or a grammatical error. Their addresses are in `engine/sources.json` and `scenarios/<id>/sources.json`.
 
-1. The framework Google Doc **"HEARsay mysteries"**: https://docs.google.com/document/d/1q2QzVFRMtBDEl7KbaLdKgp_xrxrseyejLyNDNfUky3Y/edit — the framework and rules. Read it; don't rely on older copies (`Archive/Hearsay Mystery Game.docx` and the claude.ai project's framework.md are superseded).
-2. The game text Google Sheet **"HEARsay game text"**: https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit — all of the engine's player-facing text and the framework's numbers (Facts sheet). `engine/hearsay_engine.twee` holds no wording.
+1. The framework Google Doc **"HEARsay mysteries"**: https://docs.google.com/document/d/1q2QzVFRMtBDEl7KbaLdKgp_xrxrseyejLyNDNfUky3Y/edit — the framework and rules. Four of its tabs are read by the build (game_text.py says how each is laid out): "Rules of the game" (`rules.*`), "HEAR Framework introduction" (`hear.*`), "Game facts" (the framework's numbers, a table) and "Game text" (the sentences that restate the framework, a table). Those keys are not in the Sheet. Read it; don't rely on older copies (`Archive/Hearsay Mystery Game.docx` and the claude.ai project's framework.md are superseded).
+2. The game text Google Sheet **"HEARsay game text"**: https://docs.google.com/spreadsheets/d/111OiAL_txh5G7kzgSV70Lh6TEsS4dtQR0AXgkRBQUzE/edit — the rest of the engine's player-facing text (headings, buttons, labels) and the list of screens (Passages sheet). `engine/hearsay_engine.twee` holds no wording.
 3. Per scenario, in the scenario's Drive folder (for example `The Commons' Comma/`): the Response Matrix (a Google Sheet), which the game is built from, and the Scenario Packet (a Google Doc), which must say the same things. The one exception: the packet's optional "Newspaper article" tab is read by the build and shown as the Newspaper passage; nothing in the matrix repeats it.
 
-The repository holds read-only copies of the Sheets and the packets (`engine/HEARsay game text.xlsx`, `scenarios/<id>/… – Response Matrix.xlsx`, `scenarios/<id>/… – Scenario Packet.docx`). Never edit a copy: the build replaces it from a download of the Google file (see Build). If the documents and the live game disagree, ask the author which is right.
+The repository holds read-only copies of the framework Doc, the Sheets and the packets (`engine/HEARsay mysteries.docx`, `engine/HEARsay game text.xlsx`, `scenarios/<id>/… – Response Matrix.xlsx`, `scenarios/<id>/… – Scenario Packet.docx`). Never edit a copy: the build replaces it from a download of the Google file (see Build). If the documents and the live game disagree, ask the author which is right.
 
 Use the doc's names for the game's parts: Introduction, the Hook, the CCC, Clues, Red Herrings, Major Clues, tripwire, follow-up, budget, final-answer form; passages Start, Rules, the Hook, Map, Interview, Answer, Follow-up, Evidence Board, Submission, Result, ending, ranking. Don't invent other names.
 
@@ -30,7 +30,7 @@ Structural changes to the framework are the user's decisions and belong in the G
 
 ## Build
 
-Needs Python 3.8+ with `openpyxl`, `python-docx` (and `pypdf` for a PDF export), and Tweego 2.1+ pointed at SugarCube 2.37.3. From the repo root:
+Needs Python 3.8+ with `openpyxl`, `python-docx` and Tweego 2.1+ pointed at SugarCube 2.37.3. From the repo root:
 
 ```
 python3 engine/build.py --downloads "<folder of downloads>"                  # every scenario
@@ -38,11 +38,11 @@ python3 engine/build.py commons-comma --downloads "<folder of downloads>"    # o
 python3 engine/sources.py "<folder of downloads>"                           # lists the sources, copies and downloads found
 ```
 
-The downloads folder holds the Google files downloaded as they are named in Drive: the Sheets as .xlsx, the packets as .docx, and the framework Doc as .docx or .txt (found there for the framework check, or pass `--framework`). The build first checks every download (game text, matrix rules, packet against matrix); if one has a problem it stops and copies nothing. Then it replaces each copy whose content differs and says which ones changed; copies with no download are used as they are, with a warning. Always build with fresh downloads of everything, and commit the changed copies with the rebuilt `docs/`.
+The downloads folder holds the Google files downloaded as they are named in Drive: the Sheets as .xlsx, and the packets and the framework Doc as .docx. The build first checks every download (game text, matrix rules, packet against matrix); if one has a problem it stops and copies nothing. Then it replaces each copy whose content differs and says which ones changed; copies with no download are used as they are, with a warning. Always build with fresh downloads of everything, and commit the changed copies with the rebuilt `docs/`.
 
-Checks run in order: game text vs. framework export, engine text keys; then per scenario matrix vs. Facts and itself, Scenario ID vs. folder name, packet vs. matrix, then Twee, Tweego, assets; then no two scenarios share an IFID, and the landing page. It fails loudly: fix the source, don't loosen a check. Without `--framework` it looks for a `HEARsay mysteries` export in the repository folder and the folder above it (in Drive, next to the Google Doc); if there is none the framework check is skipped with a warning. An engine or game-text change needs every scenario rebuilt; commit the rebuilt `docs/` with it.
+Checks run in order: game text vs. the framework Doc, engine text keys; then per scenario matrix vs. the Doc's Game facts and itself, Scenario ID vs. folder name, packet vs. matrix, then Twee, Tweego, assets; then no two scenarios share an IFID, and the landing page. It fails loudly: fix the source, don't loosen a check. An engine or game-text change needs every scenario rebuilt; commit the rebuilt `docs/` with it.
 
-In a cloud session, `.claude/hooks/session-start.sh` installs Tweego 2.1.1, SugarCube 2.37.3 and the Python packages and sets `TWEEGO` and `TWEEGO_PATH`. For the framework check, export the Google Doc as plain text through the Drive connector (`download_file_content` with `text/plain`) and pass the file with `--framework`. To download the Sheets and Docs, use `download_file_content` with `exportMimeType` `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` (Sheets) or `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (Docs), decode the base64 `content` into a scratch folder under the file's Drive title plus .xlsx/.docx, and pass the folder with `--downloads`.
+In a cloud session, `.claude/hooks/session-start.sh` installs Tweego 2.1.1, SugarCube 2.37.3 and the Python packages and sets `TWEEGO` and `TWEEGO_PATH`. To download the Sheets and Docs, use `download_file_content` with `exportMimeType` `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` (Sheets) or `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (Docs), decode the base64 `content` into a scratch folder under the file's Drive title plus .xlsx/.docx, and pass the folder with `--downloads`.
 
 ## Pull requests
 
@@ -52,7 +52,7 @@ Push every commit as soon as it is made, and keep every pushed branch in an open
 
 - Don't run the docx skill's `merge_runs.py` on the packet (it once turned "=" into "."). Edit the packet's XML directly.
 - Matrix columns are found by header name. 'Given by', 'Tripwire question', Grid and repeated set titles are copies the build checks; keep them in sync by hand.
-- Game text cells are trimmed. `rules.N` rows display in number order.
+- Game text cells are trimmed. Rules display in the order of the framework's "Rules of the game" tab.
 - Regression test: the build is deterministic, so for a change that should not alter a game, build `main` and the branch and compare `docs/<id>/index.html` byte for byte. For a change that should, walk the same screens of both builds in iframes with `Math.random` stubbed and diff `innerText`.
 
 ## Engine choices not yet in the Google Doc

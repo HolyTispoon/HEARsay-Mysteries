@@ -95,13 +95,13 @@ if [ -z "$downloads" ]; then
 import glob, json, os, re, sys
 root = sys.argv[1]
 sys.path.insert(0, os.path.join(root, "engine"))
-from sources import copies, framework_url
+from sources import copies
 ids = sorted(n for n in os.listdir(os.path.join(root, "scenarios"))
              if os.path.isdir(os.path.join(root, "scenarios", n)) and not n.startswith("."))
 def link(url, ext):
     m = re.search(r"/(document|spreadsheets)/d/([^/]+)", url)
     return f"https://docs.google.com/{m.group(1)}/d/{m.group(2)}/export?format={ext[1:]}" if m else None
-rows = [("HEARsay mysteries", ".docx", link(framework_url(), ".docx"))]
+rows = []
 for label, path, url in copies(ids):
     stem, ext = os.path.splitext(os.path.basename(path))
     rows.append((stem, ext, link(url, ext)))
@@ -141,10 +141,7 @@ fi
 # 3. build
 echo
 echo "Building …"
-framework=()
-[ -f "$downloads/HEARsay mysteries.docx" ] && framework=(--framework "$downloads/HEARsay mysteries.docx")
-# ${a[@]+…}: macOS's bash 3.2 calls an empty array unbound under set -u
-if ! "$py" "$repo/engine/build.py" --downloads "$downloads" ${framework[@]+"${framework[@]}"}; then
+if ! "$py" "$repo/engine/build.py" --downloads "$downloads"; then
   echo
   echo "Not published: the build stopped (see above). Fix the Google files, then run this again."
   exit 1

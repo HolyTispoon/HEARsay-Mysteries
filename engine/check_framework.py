@@ -1,26 +1,28 @@
 #!/usr/bin/env python3
 """
-Check the game text workbook against an export of the framework Google Doc ("HEARsay mysteries").
+Check the game text against the framework Google Doc ("HEARsay mysteries").
 
-    python3 check_framework.py ["HEARsay game text.xlsx"] "HEARsay mysteries.docx"
+    python3 check_framework.py ["HEARsay game text.xlsx" ["HEARsay mysteries.docx"]]
 
-The Google Doc is the source of truth for the game's structure and rules. Export it from Google Docs
-(File → Download → Microsoft Word, Plain text, or PDF) into the project folder, next to the .gdoc file.
-Word or plain text is best; PDF works if pypdf is installed (pip3 install pypdf).
+The Google Doc is the source of truth for the game's structure and rules. Its 'Rules of the game', 'HEAR
+Framework introduction', 'Game facts' and 'Game text' tabs hold some of the game text and the framework's numbers
+(see game_text.py); the rest of the game text is in the Sheet. The build uses the repository's copy,
+engine/HEARsay mysteries.docx, and by default so does this script; another .docx export can be passed instead.
 
 Checks:
   - every passage the framework lists (section 4, "Passages text: …") has a screen in the game, and every
     framework name on the Passages sheet appears in the framework;
   - every framework section the workbook cites exists;
   - rows marked verbatim appear word for word (and case for case) in the framework;
-  - every fact's framework wording appears in the framework and contains the fact's value.
+  - every fact's framework wording appears in the framework (outside the 'Game facts' and 'Game text' tabs) and
+    contains the fact's value.
 Facts with no framework wording, and passages with no framework name, are listed as notes: they are engine
 choices the framework does not describe yet.
 """
-import glob, os, re, sys
+import os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from game_text import read_game_text, DEFAULT
+from game_text import read_game_text, framework_blocks, DEFAULT, FRAMEWORK, FACTS_TAB, TEXT_TAB
 
 NUMBER_WORDS = {"once": 1, "one": 1, "two": 2, "twice": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
                 "eight": 8, "nine": 9, "ten": 10, "sixteen": 16, "twenty": 20, "forty": 40, "half": 0.5}
@@ -33,39 +35,17 @@ def norm(s):
 
 
 def framework_text(path):
-    ext = os.path.splitext(path)[1].lower()
-    if ext == ".docx":
-        import docx
-        from docx.oxml.ns import qn
-        d = docx.Document(path)
-        parts = ["".join(t.text or "" for t in p.iter(qn("w:t"))) for p in d.element.body.iter(qn("w:p"))]
-        return norm("\n".join(parts)), parts
-    if ext == ".txt":
-        raw = open(path, encoding="utf-8-sig").read()
-        return norm(raw), raw.splitlines()
-    if ext == ".pdf":
-        try:
-            from pypdf import PdfReader
-        except ImportError:
-            sys.exit("Reading a PDF export needs pypdf (pip3 install pypdf). Or export the Google Doc as Word or plain text.")
-        raw = "\n".join(p.extract_text() or "" for p in PdfReader(path).pages)
-        return norm(raw), None
-    sys.exit(f"Can't read {path}: export the framework as .docx, .txt or .pdf")
-
-
-def find_export(folder):
-    """The newest 'HEARsay mysteries*' export in folder, and a note if the Google Doc changed after it."""
-    found = [p for p in glob.glob(os.path.join(folder, "HEARsay mysteries*"))
-             if os.path.splitext(p)[1].lower() in (".docx", ".txt", ".pdf")]
-    if not found:
-        return None, None
-    path = max(found, key=os.path.getmtime)
-    note = None
-    gdoc = [p for p in glob.glob(os.path.join(folder, "HEARsay mysteries*.gdoc"))]
-    if gdoc and os.path.getmtime(gdoc[0]) > os.path.getmtime(path) + 60:
-        note = (f"The Google Doc looks newer than the export {os.path.basename(path)}. If the doc has changed, "
-                "export it again (File → Download) so the check uses the current framework.")
-    return path, note
+    """The framework's text to check against, and its paragraphs: every tab but the ones the game text comes from as
+    tables, which would otherwise vouch for themselves."""
+    if not path.lower().endswith(".docx"):
+        sys.exit(f"Can't read {path}: export the framework as .docx")
+    parts = []
+    for tab, style, content in framework_blocks(path):
+        if tab in (FACTS_TAB, TEXT_TAB):
+            continue
+        cells = [c for row in content for c in row] if style == "Table" else [content]
+        parts += [c.replace("**", "") for c in cells]
+    return norm("\n".join(parts)), parts
 
 
 def passage_list(full, paragraphs):
@@ -91,8 +71,8 @@ def numbers_in(s):
     return out
 
 
-def check(game_text_path, export_path):
-    g, errors = read_game_text(game_text_path)
+def check(game_text_path, export_path=FRAMEWORK):
+    g, errors = read_game_text(game_text_path, export_path)
     if errors:
         return [f"The game text workbook has problems; fix those first ({len(errors)}, run game_text.py)"], []
     full, paragraphs = framework_text(export_path)
@@ -141,10 +121,8 @@ def check(game_text_path, export_path):
 
 
 def main():
-    args = sys.argv[1:]
-    if len(args) == 1:
-        args = [DEFAULT] + args
-    if len(args) != 2:
+    args = sys.argv[1:] or [DEFAULT]
+    if len(args) > 2:
         sys.exit(__doc__)
     problems, notes = check(*args)
     print("GAME TEXT DISAGREES WITH THE FRAMEWORK:" if problems else "OK: the game text matches the framework")

@@ -3,12 +3,14 @@
 The sources of truth and the repository's copies of them.
 
 The sources of truth live in Google Drive, outside this repository, and only the author edits them:
-  - the framework Google Doc "HEARsay mysteries" (the build checks the game text against a download of it);
+  - the framework Google Doc "HEARsay mysteries" (the build checks the game text against it, and takes the game's
+    rules, HEAR guide, the framework's numbers and some of the game text from four of its tabs);
   - the game text Google Sheet "HEARsay game text";
   - for each scenario, its Response Matrix (a Google Sheet) and its Scenario Packet (a Google Doc).
 Their addresses are in engine/sources.json and scenarios/<id>/sources.json.
 
-The build reads the repository's copies of the Sheets and Docs: engine/HEARsay game text.xlsx and, in each
+The build reads the repository's copies of the Sheets and Docs: engine/HEARsay mysteries.docx, engine/HEARsay
+game text.xlsx and, in each
 scenario folder, the matrix .xlsx and the packet .docx. Nobody edits a copy. update_copies() replaces each copy with
 a download of its Google file (File → Download → Microsoft Excel / Word, or the Drive connector's export) when the
 download's content differs, after checking every download.
@@ -28,14 +30,12 @@ def _load(path):
         return json.load(f)
 
 
-def framework_url():
-    return _load(os.path.join(HERE, "sources.json"))["framework"]
-
-
 def copies(ids):
-    """(label, copy path, Google address) for the game text and each scenario's matrix and packet, in build order."""
-    from game_text import DEFAULT as GAME_TEXT
-    out = [("game text", GAME_TEXT, _load(os.path.join(HERE, "sources.json"))["game_text"])]
+    """(label, copy path, Google address) for the framework, the game text and each scenario's matrix and packet, in
+    build order."""
+    from game_text import DEFAULT as GAME_TEXT, FRAMEWORK
+    urls = _load(os.path.join(HERE, "sources.json"))
+    out = [("framework", FRAMEWORK, urls["framework"]), ("game text", GAME_TEXT, urls["game_text"])]
     for sid in ids:
         folder = os.path.join(SCENARIOS, sid)
         urls = _load(os.path.join(folder, "sources.json"))
@@ -79,7 +79,7 @@ def check_downloads(chosen):
     from check_packet import check as check_packet
     use = {label: download or path for label, path, _, download in chosen}
     new = {label for label, *_, download in chosen if download}
-    g, errors = read_game_text(use["game text"])
+    g, errors = read_game_text(use["game text"], use["framework"])
     problems = [f"game text: {e}" for e in errors]
     if errors:
         return problems
@@ -87,7 +87,7 @@ def check_downloads(chosen):
         if not label.endswith(" matrix"):
             continue
         sid = label[:-len(" matrix")]
-        if not new & {"game text", label, sid + " packet"}:
+        if not new & {"framework", "game text", label, sid + " packet"}:
             continue
         _, merr = read_matrix(use[label], g.facts)
         problems += [f"{label}: {e}" for e in merr]
@@ -111,8 +111,9 @@ def update_copies(folder, ids):
     for label, path, url, download in chosen:
         rel = os.path.relpath(path, ROOT)
         if not download:
-            print(f"WARNING: {label}: no download, so the build uses the copy {rel}, which may be behind {url}")
-        elif content(download) == content(path):
+            print(f"WARNING: {label}: no download, so the build uses the copy {rel}, which may be behind {url}"
+                  if os.path.exists(path) else f"WARNING: {label}: no download and no copy {rel}; download {url}")
+        elif os.path.exists(path) and content(download) == content(path):
             print(f"{label}: the copy already matches {os.path.basename(download)}")
         else:
             shutil.copyfile(download, path)
@@ -126,7 +127,6 @@ def update_copies(folder, ids):
 def main():
     folder = sys.argv[1] if len(sys.argv) > 1 else None
     ids = sorted(n for n in os.listdir(SCENARIOS) if os.path.isdir(os.path.join(SCENARIOS, n)) and not n.startswith("."))
-    print(f"framework: {framework_url()} (a download is passed to the build with --framework)")
     for label, path, url in copies(ids):
         d = find_download(folder, path) if folder else None
         print(f"{label}: {url}\n    copy: {os.path.relpath(path, ROOT)}" + (f"\n    download: {d}" if d else ""))

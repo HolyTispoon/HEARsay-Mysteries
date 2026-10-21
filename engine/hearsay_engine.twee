@@ -316,7 +316,7 @@ Config.passages.nobr = false;
 
 	view.rules = function (out, firstTime) {
 		out.append(el("h2", null, T("rules.title")));
-		/* rules.1, rules.2, … in number order, so rules can be added or removed in the workbook */
+		/* rules.1, rules.2, … in number order, so rules can be added or removed in the framework Doc */
 		const keys = Object.keys(setup.gameText || {}).filter(k => /^rules\.\d+$/.test(k))
 			.sort((a, b) => Number(a.split(".")[1]) - Number(b.split(".")[1]));
 		out.append(el("ol", { class: "hs-rules" }, keys.map(k => el("li", null, T(k)))));

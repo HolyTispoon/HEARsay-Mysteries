@@ -2,28 +2,27 @@
 """
 Build HEARsay scenarios into playable Twine (SugarCube 2) games, and the site's landing page.
 
-    python3 engine/build.py [SCENARIO_ID ...] [--downloads FOLDER] [--no-packet-check]
-                            [--framework "HEARsay mysteries.docx" | --no-framework-check]
+    python3 engine/build.py [SCENARIO_ID ...] [--downloads FOLDER] [--no-packet-check] [--no-framework-check]
 
 With no Scenario ID it builds every scenario in scenarios/. Each scenario is a folder scenarios/<Scenario ID>/
 holding the copies of its Response Matrix (.xlsx) and Scenario Packet (.docx), sources.json (their Google
 addresses) and assets/ (the portraits and the campus map).
 
 The sources of truth are Google Docs and Sheets in Drive that only the author edits (see sources.py):
-  - the framework Google Doc ("HEARsay mysteries"): the game's structure and rules;
-  - the game text Google Sheet ("HEARsay game text"): the game's own text and the framework's numbers, checked
-    against the framework;
+  - the framework Google Doc ("HEARsay mysteries"): the game's structure and rules, and in four of its tabs the
+    game's rules, HEAR guide, the framework's numbers and the sentences that restate the framework (game_text.py);
+  - the game text Google Sheet ("HEARsay game text"): the rest of the game's own text (headings, buttons, labels)
+    and the list of screens;
   - each scenario's Response Matrix (Google Sheet): the scenario, checked against the framework's numbers;
   - each scenario's packet (Google Doc): the scenario written up for people, checked against the matrix.
-The build reads the repository's copies of the Sheets and the packets.
+The build reads the repository's copies of them (engine/HEARsay mysteries.docx for the framework).
 
 Steps:
   0. With --downloads, a folder holding downloads of the Google files (Sheets as .xlsx, Docs as .docx, named as in
      Drive): checks them all, then replaces each copy whose content differs. A download with problems stops the
      build and nothing is copied. Copies with no download are used as they are, with a warning.
-  1. Reads the game text and checks it against a download of the framework (check_framework.py): --framework, or
-     the newest 'HEARsay mysteries' .docx/.txt/.pdf in the downloads folder, the repository folder or the folder
-     above it. If there is none the check is skipped with a warning.
+  1. Reads the game text and the framework's numbers (the framework's tabs and the Sheet) and checks them against
+     the rest of the framework (check_framework.py).
   2. Checks that every text the engine asks for is in the game text workbook.
   3. For each scenario: reads the matrix and stops if it breaks a framework rule or disagrees with itself
      (scenario_matrix.py), and checks that the packet says the same things as the matrix (check_packet.py).
@@ -36,7 +35,7 @@ Steps:
   6. Writes the landing page, docs/index.html, from landing.html and every built scenario.
 Every check stops the build and lists each problem. GitHub Pages serves docs/.
 
-Needs openpyxl and python-docx (pip3 install openpyxl python-docx), and pypdf for a PDF framework export.
+Needs openpyxl and python-docx (pip3 install openpyxl python-docx).
 
 Tweego: https://www.motoslave.net/tweego/ . Put `tweego` on your PATH, or set TWEEGO=/path/to/tweego.
 Tweego must have the SugarCube 2.37.3 story format (set TWEEGO_PATH to a folder holding sugarcube-2/ if the
@@ -51,9 +50,9 @@ DOCS = os.path.join(ROOT, "docs")  # the published site
 sys.path.insert(0, HERE)
 from scenario_matrix import read_matrix, PASSAGE_PARTS
 from check_packet import check as check_packet, norm, packet_article, ARTICLE_TAB
-from game_text import read_game_text, DEFAULT as GAME_TEXT
+from game_text import read_game_text, DEFAULT as GAME_TEXT, FRAMEWORK
 from sources import update_copies
-from check_framework import check as check_framework, find_export
+from check_framework import check as check_framework
 
 ENGINE = os.path.join(HERE, "hearsay_engine.twee")
 # Appended to the <head> of index.html; it links the site icons, which are the same for every scenario
@@ -66,23 +65,13 @@ SHARED_ASSETS = os.path.join(HERE, "shared-assets")
 DYNAMIC_KEYS = re.compile(r"^(rules\.\d+|hear\.[HEAR]\.(move|text)|result\.\w+|ending\.verdict\.\w+)$")
 
 
-def load_game_text(framework, skip, downloads):
-    g, errors = read_game_text(GAME_TEXT)
+def load_game_text(skip):
+    framework = FRAMEWORK
+    g, errors = read_game_text(GAME_TEXT, framework)
     if errors:
-        sys.exit("The game text workbook has problems; fix them before building:\n" + "\n".join(" - " + e for e in errors))
+        sys.exit("The game text has problems; fix them before building:\n" + "\n".join(" - " + e for e in errors))
     if skip:
         print("Skipping the framework check (--no-framework-check).")
-        return g
-    note = None
-    if not framework and downloads:
-        framework, note = find_export(downloads)
-    if not framework:
-        framework, note = find_export(ROOT)
-    if not framework:
-        framework, note = find_export(os.path.dirname(ROOT))  # in Drive: the folder holding the Google Doc
-    if not framework:
-        print("WARNING: no export of the framework ('HEARsay mysteries' .docx/.txt/.pdf) found, so the game text "
-              "was not checked against it. Export the Google Doc next to the repository folder, or pass --framework.")
         return g
     problems, notes = check_framework(GAME_TEXT, framework)
     # the matrix's passage names must be framework names too
@@ -96,8 +85,6 @@ def load_game_text(framework, skip, downloads):
                  + "\n".join(" - " + p for p in problems))
     print(f"Framework OK: the game text matches {os.path.basename(framework)}"
           + (f" ({len(notes)} engine choices the framework does not describe; run check_framework.py to list them)" if notes else ""))
-    if note:
-        print("WARNING: " + note)
     return g
 
 
@@ -266,7 +253,7 @@ def build_scenario(sid, g, no_packet_check):
     )
     text = json.dumps(g.text, ensure_ascii=False).replace("</", "<\\/")
     scen = (f":: ScenarioData [script]\n/* Generated by build.py from {os.path.basename(matrix)} and "
-            f"{os.path.basename(GAME_TEXT)}. Do not edit by hand. */\nsetup.scenario = {data};\nsetup.gameText = {text};\n")
+            f"{os.path.basename(GAME_TEXT)} and {os.path.basename(FRAMEWORK)}. Do not edit by hand. */\nsetup.scenario = {data};\nsetup.gameText = {text};\n")
     with open(ENGINE, encoding="utf-8") as f:
         engine = f.read()
     # scenario data must load before the engine script, so it comes first
@@ -329,7 +316,6 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("scenarios", nargs="*", metavar="SCENARIO_ID", help="the scenarios to build (default: all of them)")
     ap.add_argument("--no-packet-check", action="store_true", help="build without checking the packets against the matrices")
-    ap.add_argument("--framework", help="an export of the framework Google Doc (.docx, .txt or .pdf)")
     ap.add_argument("--no-framework-check", action="store_true", help="build without checking the game text against the framework")
     ap.add_argument("--downloads", metavar="FOLDER", help="a folder of downloads of the Google Sheets (.xlsx) and Docs "
                                                           "(.docx); each replaces its copy when the content differs")
@@ -343,7 +329,7 @@ def main():
     if a.downloads and not os.path.isdir(a.downloads):
         sys.exit(f"--downloads: no folder {a.downloads}")
     update_copies(a.downloads, ids)
-    g = load_game_text(a.framework, a.no_framework_check, a.downloads)
+    g = load_game_text(a.no_framework_check)
     check_engine_keys(g)
     built = {sid: build_scenario(sid, g, a.no_packet_check) for sid in ids}
 
