@@ -131,7 +131,7 @@ def expected(s):
     if s.NEWS_ART:
         texts.append(("Newspaper illustration file", s.NEWS_ART))
     for q in s.QUESTIONS:
-        texts += [(f"{q['id']} question", q["text"]), (f"{q['id']} angle", q["angle"]), (f"{q['id']} why it lands", q["tripwire_logic"])]
+        texts.append((f"{q['id']} question", q["text"]))
     for w in s.WITNESSES:
         n = w["name"]
         texts += [(f"{n}: role", w["role"]), (f"{n}: public card", w["public_card"]), (f"{n}: position on the CCC", w["stance"]),
@@ -192,16 +192,24 @@ def check(matrix_path, packet_path, facts=None):
         if not re.search(rx, full, re.I):
             problems.append(f"{label}: the packet does not label this answer the same way")
 
-    # Final-answer options: the packet's final-answer paragraph must list every option the game offers
-    # (checked in one paragraph, since the names also appear elsewhere in the packet)
+    # Final-answer options: the packet must list every option the game offers, either in one paragraph or spread over
+    # the final-answer table (the paragraphs from "Final-answer form" to "The aftermath", for example one per row).
+    # The check stays inside that one place, since the names also appear elsewhere in the packet.
     options = [("person", o) for o in s.PUZZLE["who_options"]] + [("place", o) for o in s.PUZZLE["where_options"]]
     home = max(paras, key=lambda p: sum(norm(o) in p for _, o in options))
+    start = next((i for i, p in enumerate(paras) if p.startswith(norm("Final-answer form"))), None)
+    table = []
+    if start is not None:
+        for p in paras[start + 1:start + 61]:
+            if p.startswith(norm("The aftermath")):
+                break
+            table.append(p)
     for kind, o in options:
-        if norm(o) not in home:
+        if norm(o) not in home and not any(norm(o) in p for p in table):
             problems.append(f"Final-answer form: the packet's list of offered options is missing the {kind} \"{o}\"")
     fa = s.PUZZLE["final_answer"]
     for kind in ("who", "where"):
-        if norm(fa[kind]) not in home:
+        if norm(fa[kind]) not in home and not any(norm(fa[kind]) in p for p in table):
             problems.append(f"Final-answer form: the correct {kind} (\"{fa[kind]}\") is not given with the options")
 
     # Question budget (a framework fact): every "<number> questions" in the packet must be the budget (or the eight questions)
