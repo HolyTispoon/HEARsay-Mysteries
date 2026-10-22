@@ -362,7 +362,7 @@ Config.passages.nobr = false;
 				/* matrix Settings: Newspaper illustration; the caption describes it */
 				s.news_art ? el("figure", { class: "hs-paper-art" },
 					el("img", { src: s.asset_dir + "/" + s.news_art, alt: "" }),
-					a.caption ? el("figcaption", null, a.caption) : null) : null,
+					a.caption ? el("figcaption", null, el("b", null, T("newspaper.illustration")), a.caption) : null) : null,
 				el("div", { class: "hs-columns" }, story)),
 			actionRow(firstTime
 				? btn(T("newspaper.next"), () => go("Hook"), "hs-primary")
@@ -719,6 +719,7 @@ h3 { margin-top: 1.4em; font-size: 1.1em; color: var(--accent); }
 .hs-paper-art { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .4em 1em; margin: 0 0 1.2em; }
 .hs-paper-art img { display: block; width: 100%; max-width: 22em; height: auto; border: 1px solid var(--news-rule); }
 .hs-paper-art figcaption { flex: 1 14em; font-size: .85em; line-height: 1.4; color: var(--news-soft); }
+.hs-paper-art figcaption b { font: 700 .8em/1 "Helvetica Neue", Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--news-navy); margin-right: .5em; }
 .hs-columns { columns: 3 15em; column-gap: 1.8em; column-rule: 1px solid var(--news-rule); text-align: justify; hyphens: auto; }
 .hs-columns p { margin: 0 0 .7em; text-indent: 1.4em; }
 .hs-columns > p:first-child { text-indent: 0; }
