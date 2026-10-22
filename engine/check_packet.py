@@ -54,10 +54,14 @@ def packet_article(path):
     """The packet's newspaper article, or None if the packet has no 'Newspaper article' tab.
 
     The tab holds a heading (the headline), then the deck, a line starting "By " (the byline) and the paragraphs
-    of the story, up to the next tab. Google's .docx export has marked tabs in two ways: with a Title paragraph
+    of the story, up to the next tab. Two optional parts, for the printed front page only (article_pdf.py): a
+    paragraph starting "Illustration:" (the illustration's caption), and a box such as "Tonight's panel": a heading
+    after the byline, then bulleted lines "Name – description". Google's .docx export has marked tabs in two ways: with a Title paragraph
     holding the tab's name, or (since October 2026) only with a section break at the end of each tab. Without the
     name, the article tab is the one that opens with a headline, a deck and a byline. Returns
-    ({"headline", "deck", "byline", "paragraphs"}, problems)."""
+    ({"headline", "deck", "byline", "paragraphs", "caption", "panel"}, problems); panel is None or
+    {"title", "items": [{"name", "text"}], "after": the number of story paragraphs before it}."""
+    listed = lambda p: p.style.name.startswith("List") or (p._p.pPr is not None and p._p.pPr.numPr is not None)
     paragraphs = docx.Document(path).paragraphs
     tab, inside = [], False
     for p in paragraphs:
@@ -68,13 +72,13 @@ def packet_article(path):
             continue
         t = " ".join(p.text.split())
         if inside and t:
-            tab.append((p.style.name, t))
+            tab.append((p.style.name, t, listed(p)))
     if not tab:
         tabs = [[]]
         for p in paragraphs:
             t = " ".join(p.text.split())
             if t:
-                tabs[-1].append((p.style.name, t))
+                tabs[-1].append((p.style.name, t, listed(p)))
             if p._p.pPr is not None and p._p.pPr.find(qn("w:sectPr")) is not None:
                 tabs.append([])
         found = [s for s in tabs if len(s) > 2 and s[0][0].startswith("Heading") and s[2][1].startswith("By ")]
@@ -84,15 +88,30 @@ def packet_article(path):
         if not found:
             return None, []
         tab = found[0]
-    head = next((i for i, (style, _) in enumerate(tab) if style.startswith("Heading")), None)
-    by = next((i for i, (_, t) in enumerate(tab) if t.startswith("By ")), None)
+    head = next((i for i, (style, _, _) in enumerate(tab) if style.startswith("Heading")), None)
+    by = next((i for i, (_, t, _) in enumerate(tab) if t.startswith("By ")), None)
     if head is None or by is None or by != head + 2:
         return None, [f"The '{ARTICLE_TAB}' tab must start with a heading (the headline), then one paragraph (the deck), "
                       "then the byline ('By …'), then the story"]
-    body = [t for _, t in tab[by + 1:]]
+    body, caption, panel = [], None, None
+    for style, t, is_list in tab[by + 1:]:
+        if t.startswith("Illustration:"):
+            caption = t.removeprefix("Illustration:").strip()
+        elif style.startswith("Heading"):
+            if panel:
+                return None, [f"The '{ARTICLE_TAB}' tab has more than one heading after the byline; it can hold one box"]
+            panel = {"title": t, "items": [], "after": len(body)}
+        elif is_list and panel:
+            name, text = (re.split(r"\s+[–—-]\s+", t, maxsplit=1) + [""])[:2]  # "Name – description"
+            panel["items"].append({"name": name, "text": text})
+        else:
+            body.append(t)
     if not body:
         return None, [f"The '{ARTICLE_TAB}' tab has no story after the byline"]
-    return {"headline": tab[head][1], "deck": tab[head + 1][1], "byline": tab[by][1], "paragraphs": body}, []
+    if panel and not panel["items"]:
+        return None, [f"The box '{panel['title']}' in the '{ARTICLE_TAB}' tab needs bulleted lines under its heading"]
+    return {"headline": tab[head][1], "deck": tab[head + 1][1], "byline": tab[by][1], "paragraphs": body,
+            "caption": caption, "panel": panel}, []
 
 
 def expected(s):
@@ -107,6 +126,10 @@ def expected(s):
         texts.append(("Logo file", s.LOGO))
     if s.MASTHEAD:
         texts.append(("Masthead file", s.MASTHEAD))
+    if s.START_IMAGE:
+        texts.append(("Start image file", s.START_IMAGE))
+    if s.NEWS_ART:
+        texts.append(("Newspaper illustration file", s.NEWS_ART))
     for q in s.QUESTIONS:
         texts += [(f"{q['id']} question", q["text"]), (f"{q['id']} angle", q["angle"]), (f"{q['id']} why it lands", q["tripwire_logic"])]
     for w in s.WITNESSES:

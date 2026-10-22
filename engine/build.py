@@ -28,20 +28,23 @@ Steps:
      (scenario_matrix.py), and checks that the packet says the same things as the matrix (check_packet.py).
   4. Writes docs/<Scenario ID>/source/story.twee (Twee 3), with the scenario and the game text written into the
      engine as `setup.scenario` and `setup.gameText`, and compiles it with Tweego into docs/<Scenario ID>/index.html.
-     The newspaper article, if the packet has a 'Newspaper article' tab, comes from the packet (packet_article).
-  5. Copies the scenario's portraits, map, logo and masthead (if it has them), and the site icons (ICONS), into
-     docs/<Scenario ID>/assets/; a logo or masthead not in the scenario's assets/ is looked for in SHARED_ASSETS;
+     The newspaper article, if the packet has a 'Newspaper article' tab, comes from the packet (packet_article),
+     and is also printed to docs/<Scenario ID>/newspaper-article.pdf (article_pdf.py, with headless Chrome), with
+     the illustration named in the matrix's Settings and the tab's caption and box.
+  5. Copies the scenario's portraits, map, logo, masthead, Start image and newspaper illustration (if it has them), and the site icons (ICONS), into
+     docs/<Scenario ID>/assets/; one of the optional images not in the scenario's assets/ is looked for in SHARED_ASSETS;
      head.html links the icons from the page's <head>.
   6. Writes the landing page, docs/index.html, from landing.html and every built scenario.
 Every check stops the build and lists each problem. GitHub Pages serves docs/.
 
-Needs openpyxl and python-docx (pip3 install openpyxl python-docx).
+Needs openpyxl and python-docx (pip3 install openpyxl python-docx), and pypdf and Google Chrome for a scenario with a
+newspaper article.
 
 Tweego: https://www.motoslave.net/tweego/ . Put `tweego` on your PATH, or set TWEEGO=/path/to/tweego.
 Tweego must have the SugarCube 2.37.3 story format (set TWEEGO_PATH to a folder holding sugarcube-2/ if the
 bundled one is older).
 """
-import argparse, glob, json, os, re, shutil, subprocess, sys
+import argparse, glob, json, os, re, shutil, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)  # the repository
@@ -53,6 +56,7 @@ from check_packet import check as check_packet, norm, packet_article, ARTICLE_TA
 from game_text import read_game_text, DEFAULT as GAME_TEXT, FRAMEWORK
 from sources import update_copies
 from check_framework import check as check_framework
+from article_pdf import write_pdf, PDF_NAME
 
 ENGINE = os.path.join(HERE, "hearsay_engine.twee")
 # Appended to the <head> of index.html; it links the site icons, which are the same for every scenario
@@ -145,6 +149,7 @@ def scenario_json(d, article=None, asset_dir="assets"):
         "map": d.MAP,
         "logo": d.LOGO,
         "masthead": d.MASTHEAD,
+        "start_image": d.START_IMAGE,
         "article": article_json(d, article),
         "rank_exact": d.FACTS["rank_exact"],
         "rank_near": d.FACTS["rank_near"],
@@ -233,17 +238,29 @@ def build_scenario(sid, g, no_packet_check):
     print(f"Newspaper article: {article['headline']}" if article else "No newspaper article in the packet")
 
     out = os.path.join(DOCS, sid)
+    # the last build's article PDF, kept if the article is unchanged (article_pdf.py)
+    previous = None
+    if os.path.exists(os.path.join(out, PDF_NAME)):
+        previous = os.path.join(tempfile.mkdtemp(), PDF_NAME)
+        shutil.copyfile(os.path.join(out, PDF_NAME), previous)
     shutil.rmtree(out, ignore_errors=True)  # a clean build: nothing left over from an earlier one
     assets = os.path.join(folder, "assets")
     for w in d.WITNESSES:
         copy(find_file(assets, w["portrait"]), os.path.join(out, "assets", "portraits", w["portrait"]))
     copy(find_file(assets, d.MAP), os.path.join(out, "assets", d.MAP))
-    for fn in (d.LOGO, d.MASTHEAD):
+    for fn in (d.LOGO, d.MASTHEAD, d.START_IMAGE, d.NEWS_ART):
         if fn:
             own = os.path.join(assets, fn)
             copy(own if os.path.exists(own) else find_file(SHARED_ASSETS, fn), os.path.join(out, "assets", fn))
     for fn in ICONS:
         copy(os.path.join(HERE, fn), os.path.join(out, "assets", fn))
+    if article:
+        masthead = d.MASTHEAD and os.path.join(out, "assets", d.MASTHEAD)
+        art = d.NEWS_ART and os.path.join(out, "assets", d.NEWS_ART)
+        problem = write_pdf(article_json(d, article), masthead, art, os.path.join(out, PDF_NAME), previous)
+        if problem:
+            sys.exit(problem)
+        print(f"Built {os.path.relpath(os.path.join(out, PDF_NAME), ROOT)}")
 
     data = json.dumps(scenario_json(d, article), ensure_ascii=False).replace("</", "<\\/")
     header = (
