@@ -131,7 +131,7 @@ def expected(s):
     if s.NEWS_ART:
         texts.append(("Newspaper illustration file", s.NEWS_ART))
     for q in s.QUESTIONS:
-        texts += [(f"{q['id']} question", q["text"]), (f"{q['id']} angle", q["angle"]), (f"{q['id']} why it lands", q["tripwire_logic"])]
+        texts.append((f"{q['id']} question", q["text"]))
     for w in s.WITNESSES:
         n = w["name"]
         texts += [(f"{n}: role", w["role"]), (f"{n}: public card", w["public_card"]), (f"{n}: position on the CCC", w["stance"]),

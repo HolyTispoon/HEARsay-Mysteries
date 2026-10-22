@@ -144,9 +144,9 @@ def read_matrix(path, facts=None):
             errors.append(f"Final-answer form: exactly one {kind} must be marked correct (found {len(found)})")
 
     # Questions
-    qrows = _keyed(_sheet(wb, "Questions", ["ID", "Question", "Angle", "Tripwire for", "Why it lands"], errors), "ID", "Questions", errors)
-    questions = [{"id": k, "text": need(r["Question"], f"Questions {k}: Question"), "angle": r["Angle"],
-                  "tripwire_for_name": r["Tripwire for"], "tripwire_logic": r["Why it lands"]} for k, r in qrows.items()]
+    qrows = _keyed(_sheet(wb, "Questions", ["ID", "Question", "Tripwire for"], errors), "ID", "Questions", errors)
+    questions = [{"id": k, "text": need(r["Question"], f"Questions {k}: Question"),
+                  "tripwire_for_name": r["Tripwire for"]} for k, r in qrows.items()]
     Q = {q["id"]: q for q in questions}
 
     # Witnesses
