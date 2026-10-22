@@ -24,7 +24,6 @@ scenarios/
     The Commons' Comma – Response Matrix.xlsx
     The Commons' Comma – Scenario Packet.docx
     assets/                     game-ready images: portraits/, campus-map.jpg
-    source-art/                 originals (campus-map.png, Witness portraits/); not used by the build
   <next-scenario>/
     …
 docs/                           the published site (generated; GitHub Pages serves this folder)
@@ -96,14 +95,14 @@ HEARsay mystery game/
 - On the Mac, Google Drive for desktop syncs the clone, with the folder set to "Available offline" so git works on local files.
 - Changes merged on GitHub (including Claude's) reach Drive when you run `bash tools/update-drive.sh` on the Mac. It fetches `main`, lists the commits and every file it would add, change or delete, and updates only after you confirm (`--check` only lists). It only touches files git tracks inside `HEARsay-Mysteries/`, never pushes, and refuses without changing anything if the clone isn't on `main`, has uncommitted edits to tracked files, or has commits GitHub doesn't. (Until 2026-10-21 a launchd job pulled every 10 minutes; the author decided against it, and `setup-drive-clone.sh` now removes it.)
 - Your edits reach GitHub when you commit and push them (GitHub Desktop: one commit, one push). Nothing pushes automatically.
-- Source art lives in the repository, in `scenarios/<id>/source-art/`.
+- A scenario's images live only in the repository, in `scenarios/<id>/assets/`; the build takes them from there and nowhere else. Original artwork the game doesn't use (such as the contact sheet the portraits were cut from) is in Drive `Archive/`, not in the repository.
 - Updating the copies: download the Google files into one folder and build with `--downloads <folder>`. The build checks all the downloads first (game text, matrix rules, packet against matrix) and copies nothing if one has a problem; then it replaces each copy whose content differs. The changed copies are committed with the rebuilt `docs/`, so every change to the text shows in a pull request. The build can't download the files itself (it has no Google credentials): in a Claude session the Drive connector exports them; on the Mac, File → Download.
 
 ## Migration, in order
 
 1. **Restructure.** Done in this pull request: files moved with `git mv`, the build changed as above, the landing page, `README.md` and `CLAUDE.md` rewritten. Verified byte for byte (see Build).
 2. **Publish.** Done: the repository is renamed `HEARsay-Mysteries`. Still to do, by the author, right after merging: Settings → Pages → Build and deployment → Branch `main`, folder `/docs` → Save. Until then the site shows the repository root, which no longer holds a game.
-3. **Drive.** Done 2026-10-21: `tools/setup-drive-clone.sh` cloned the repository into Drive as `HEARsay-Mysteries/`. `The Commons' Comma/` now holds the scenario's Google Sheet and Doc (and `Assets/`); its old .xlsx, .docx and `Game/` are in `Archive/Commons Comma before Google sources (2026-10-21)/`. Still to do: move `The Commons' Comma/Assets/` into the repository as `scenarios/commons-comma/source-art/` and commit it, and move `Twine engine/` and `Claude outputs/` to `Archive/`. Update the Drive `CLAUDE.md`.
+3. **Drive.** Done 2026-10-21: `tools/setup-drive-clone.sh` cloned the repository into Drive as `HEARsay-Mysteries/`. `The Commons' Comma/` now holds only the scenario's Google Sheet and Doc; its old .xlsx, .docx and `Game/` are in `Archive/Commons Comma before Google sources (2026-10-21)/`, and its old `Assets/` (identical copies of the game's portraits and map, plus the original contact sheet, `campus-map.png` and a 10-witness README) is in `Archive/Commons Comma original art/`. Still to do: move `Twine engine/` and `Claude outputs/` to `Archive/`. Update the Drive `CLAUDE.md`.
 4. **Cloud builds.** Done: `.claude/hooks/session-start.sh`.
 5. **Optional:** a check on GitHub that runs the build's checks on every pull request and fails if `docs/` is out of date.
 
@@ -112,4 +111,4 @@ HEARsay mystery game/
 1. Repository renamed to `HEARsay-Mysteries`; games at `https://holytispoon.github.io/HEARsay-Mysteries/<scenario-id>/`. The old Pages link is not redirected (2026-10-18). The matrix's Play URL setting holds the new address, for reference.
 2. The landing page carries the project's introduction as well as the list of scenarios.
 3. The site folder is `docs/`, served directly by GitHub Pages.
-4. Source art is kept in the repository, in `scenarios/<id>/source-art/`.
+4. Source art is kept in the repository, in `scenarios/<id>/source-art/`. Changed 2026-10-21: it isn't; `scenarios/<id>/assets/` is the one place for a scenario's images, and originals the game doesn't use go to Drive `Archive/`.
