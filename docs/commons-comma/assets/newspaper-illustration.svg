@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" role="img" aria-label="Illustration: the words 'house masters and students' from the Charter, with the smeared mark after 'masters' enlarged in a loupe">
+        <defs>
+          <filter id="smear" x="-50%" y="-50%" width="200%" height="200%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/>
+            <feDisplacementMap in="SourceGraphic" scale="5"/>
+            <feGaussianBlur stdDeviation="0.6"/>
+          </filter>
+          <filter id="smearBig" x="-50%" y="-50%" width="200%" height="200%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.25" numOctaves="3" seed="7"/>
+            <feDisplacementMap in="SourceGraphic" scale="14"/>
+            <feGaussianBlur stdDeviation="1.4"/>
+          </filter>
+          <clipPath id="loupe"><circle cx="760" cy="150" r="112"/></clipPath>
+        </defs>
+        <rect width="960" height="300" fill="#ffffff"/>
+        <g font-family="'Bodoni 72', Didot, serif" font-style="italic" fill="#3b2f22">
+          <text x="44" y="166" font-size="42">the faculty house masters</text>
+          <text x="560" y="166" font-size="42" opacity="0">.</text>
+          <text x="44" y="226" font-size="42">and students of the University.</text>
+        </g>
+        <g filter="url(#smear)" fill="#3b2f22">
+          <ellipse cx="535" cy="160" rx="7" ry="6"/>
+          <path d="M538 162 q2 12 -8 20 q6 -10 2 -16 z"/>
+          <ellipse cx="545" cy="158" rx="5" ry="3" opacity=".55"/>
+        </g>
+        <circle cx="537" cy="164" r="26" fill="none" stroke="#b88a35" stroke-width="2"/>
+        <line x1="560" y1="152" x2="650" y2="118" stroke="#b88a35" stroke-width="2"/>
+        <circle cx="760" cy="150" r="118" fill="#062843"/>
+        <g clip-path="url(#loupe)">
+          <rect x="640" y="30" width="240" height="240" fill="#ffffff"/>
+          <g filter="url(#smearBig)" fill="#3b2f22">
+            <ellipse cx="748" cy="138" rx="34" ry="29"/>
+            <path d="M762 148 q10 58 -38 96 q28 -48 10 -78 z"/>
+            <ellipse cx="800" cy="128" rx="26" ry="14" opacity=".5"/>
+            <ellipse cx="712" cy="166" rx="12" ry="8" opacity=".35"/>
+          </g>
+        </g>
+        <text x="760" y="296" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="2" fill="#062843">COMMA OR BLOT?</text>
+        <text x="44" y="64" font-family="'Helvetica Neue', Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="2" fill="#b88a35">THE COMMONS CLAUSE</text>
+        <line x1="44" y1="78" x2="440" y2="78" stroke="#c9c4b6" stroke-width="1"/>
+      </svg>
