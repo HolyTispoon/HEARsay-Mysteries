@@ -16,8 +16,11 @@
 #      older than main's copy of it, main's copy takes over from here, so the script always matches the code.
 #   4. Lists every file the rebuild changed.
 #   5. Publishes, if anything changed: commits to a new branch, opens a pull request, and merges it into main.
-#      GitHub Pages serves the new games a minute or two later.
-#   6. Resets the Drive clone to main (tools/update-drive.sh --yes), listing what changed, even when nothing new
+#   6. Makes sure GitHub Pages serves main, even when nothing new was published (Pages sometimes skips a push):
+#      asks Pages to deploy main, waits for that deploy to finish, then waits until every built page on the live
+#      site matches the files just built. If Pages fails or is still behind after about 12 minutes, it says so and
+#      the run ends with an error once step 7 is done.
+#   7. Resets the Drive clone to main (tools/update-drive.sh --yes), listing what changed, even when nothing new
 #      was published.
 # It never asks anything. It first stops any other run of publish.sh that is still going (and its build), so
 # each run starts clean from the latest main.
@@ -209,12 +212,57 @@ $(g diff --name-status HEAD~1 HEAD)
   (cd "$repo" && gh pr merge "$url" --merge --delete-branch >/dev/null)
   g switch --quiet main
   echo "Published: $url"
-  echo "GitHub Pages serves the new games in a minute or two: https://holytispoon.github.io/HEARsay-Mysteries/"
 fi
 
-# 6. the Drive clone, reset to main without asking (main's update-drive.sh, so --yes is always understood)
+# 6. GitHub Pages: deploy main and wait until the live site serves exactly what was built
+slug="HolyTispoon/HEARsay-Mysteries"
+site="https://holytispoon.github.io/HEARsay-Mysteries"
+pages_ok=true
+g fetch --quiet origin main
+sha="$(g rev-parse origin/main)"
+echo
+echo "Asking GitHub Pages to deploy main (${sha:0:7}) …"
+gh api -X POST "repos/$slug/pages/builds" >/dev/null 2>&1 || echo "  (GitHub didn't take the request; waiting for its own deploy instead)"
+deployed=false
+for _ in $(seq 60); do  # up to 10 minutes
+  latest="$(gh api "repos/$slug/pages/builds/latest" -q '.status + " " + .commit' 2>/dev/null || true)"
+  case "$latest" in
+    "built $sha") deployed=true; break ;;
+    "errored $sha") break ;;
+  esac
+  sleep 10
+done
+if ! $deployed; then
+  pages_ok=false
+  echo "GitHub Pages did not deploy main (${sha:0:7}); its latest deploy is: ${latest:-unknown}."
+  echo "See https://github.com/$slug/actions, or run this again."
+else
+  # the live site caches pages; ask with a fresh query string until each built page matches main's copy
+  pages="$(cd "$repo/docs" && find . -name index.html | sed 's|^\./||' | sort)"
+  stale="$pages"
+  for _ in $(seq 24); do  # up to 2 minutes
+    stale=""
+    for p in $pages; do
+      want="$(shasum -a 256 < "$repo/docs/$p" | cut -d' ' -f1)"
+      got="$(curl -fsSL "$site/$p?v=$sha-$RANDOM" 2>/dev/null | shasum -a 256 | cut -d' ' -f1)"
+      [ "$want" = "$got" ] || stale="$stale $p"
+    done
+    [ -z "$stale" ] && break
+    sleep 5
+  done
+  if [ -n "$stale" ]; then
+    pages_ok=false
+    echo "GitHub Pages deployed main, but these pages still serve an older version:$stale"
+  else
+    echo "The live site serves main (${sha:0:7}): $site/"
+    echo "A browser that already had the page open may show the old one for up to 10 minutes; reload to see the new one."
+  fi
+fi
+
+# 7. the Drive clone, reset to main without asking (main's update-drive.sh, so --yes is always understood)
 if [ -f "$here/update-drive.sh" ] && [ "$(cd "$here/.." && pwd)" != "$repo" ]; then
   echo
   echo "Updating the Drive clone ($(cd "$here/.." && pwd)) …"
   bash "$repo/tools/update-drive.sh" --yes --repo "$(cd "$here/.." && pwd)"
 fi
+$pages_ok || exit 1
