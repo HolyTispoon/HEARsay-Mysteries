@@ -14,10 +14,13 @@
 #   3. Builds in its own copy of the repository (~/.cache/hearsay-publish/HEARsay-Mysteries, reset to GitHub's main
 #      each run), never in the Drive clone. The build runs every check and stops if one fails. If this script is
 #      older than main's copy of it, main's copy takes over from here, so the script always matches the code.
-#   4. Lists every file the rebuild changed. If nothing changed, it stops there.
-#   5. Publishes: commits to a new branch, opens a pull request, and merges it into main. GitHub Pages serves the
-#      new games a minute or two later.
-#   6. Runs tools/update-drive.sh, which lists what it would change in the Drive clone and asks first.
+#   4. Lists every file the rebuild changed.
+#   5. Publishes, if anything changed: commits to a new branch, opens a pull request, and merges it into main.
+#      GitHub Pages serves the new games a minute or two later.
+#   6. Resets the Drive clone to main (tools/update-drive.sh --yes), listing what changed, even when nothing new
+#      was published.
+# It never asks anything. It first stops any other run of publish.sh that is still going (and its build), so
+# each run starts clean from the latest main.
 #
 # Needs the GitHub CLI signed in (gh auth status), and your browser signed in to the Google account that owns the files.
 set -euo pipefail
@@ -32,6 +35,21 @@ while [ $# -gt 0 ]; do
     *) echo "Unknown option: $1 (see the top of $0)"; exit 1 ;;
   esac
 done
+
+# stop any earlier run that is still going, with what it started (the build, Chrome); main's copy taking over
+# below keeps this process's id, so it isn't stopped
+stop_tree() {  # a process and everything under it
+  local child
+  for child in $(pgrep -P "$1" || true); do stop_tree "$child"; done
+  kill -TERM "$1" 2>/dev/null || true
+}
+if [ -z "${HEARSAY_PUBLISH_HERE:-}" ]; then
+  for pid in $(pgrep -f "tools/publish\.sh" || true); do
+    [ "$pid" = "$$" ] && continue
+    echo "Stopping an earlier run of publish.sh (process $pid) …"
+    stop_tree "$pid"
+  done
+fi
 
 # the tools folder this was started from (the Drive clone's, usually), kept when main's copy takes over below
 here="${HEARSAY_PUBLISH_HERE:-$(cd "$(dirname "$0")" && pwd)}"
@@ -159,41 +177,44 @@ fi
 
 # 4. what changed
 changes="$(g status --porcelain)"
-if [ -z "$changes" ]; then
+if [ -n "$changes" ]; then
   echo
-  echo "Nothing to publish: the published games already match the Google files."
-  exit 0
+  echo "Files the rebuild changed (M changed, ?? new, D deleted):"
+  g status --short | sed 's/^/  /'
+  echo
 fi
-echo
-echo "Files the rebuild changed (M changed, ?? new, D deleted):"
-g status --short | sed 's/^/  /'
-echo
 if $check_only; then
   echo "Nothing published (--check)."
   exit 0
 fi
 
 # 5. publish
-branch="publish/$(date +%Y-%m-%d-%H%M%S)"
-title="Rebuild from the Google files ($(date +%Y-%m-%d))"
-g switch --quiet -c "$branch"
-g add -A
-g commit --quiet -m "$title"
-g push --quiet -u origin "$branch"
-body="Published with \`tools/publish.sh\`: rebuilt every game from fresh downloads of the Google files.
+if [ -z "$changes" ]; then
+  echo
+  echo "Nothing new to publish: the published games already match the Google files."
+else
+  branch="publish/$(date +%Y-%m-%d-%H%M%S)"
+  title="Rebuild from the Google files ($(date +%Y-%m-%d))"
+  g switch --quiet -c "$branch"
+  g add -A
+  g commit --quiet -m "$title"
+  g push --quiet -u origin "$branch"
+  body="Published with \`tools/publish.sh\`: rebuilt every game from fresh downloads of the Google files.
 
 Files changed:
 \`\`\`
 $(g diff --name-status HEAD~1 HEAD)
 \`\`\`"
-url="$(cd "$repo" && gh pr create --base main --head "$branch" --title "$title" --body "$body")"
-(cd "$repo" && gh pr merge "$url" --merge --delete-branch >/dev/null)
-g switch --quiet main
-echo "Published: $url"
-echo "GitHub Pages serves the new games in a minute or two: https://holytispoon.github.io/HEARsay-Mysteries/"
+  url="$(cd "$repo" && gh pr create --base main --head "$branch" --title "$title" --body "$body")"
+  (cd "$repo" && gh pr merge "$url" --merge --delete-branch >/dev/null)
+  g switch --quiet main
+  echo "Published: $url"
+  echo "GitHub Pages serves the new games in a minute or two: https://holytispoon.github.io/HEARsay-Mysteries/"
+fi
 
-# 6. the Drive clone
+# 6. the Drive clone, reset to main without asking (main's update-drive.sh, so --yes is always understood)
 if [ -f "$here/update-drive.sh" ] && [ "$(cd "$here/.." && pwd)" != "$repo" ]; then
   echo
-  bash "$here/update-drive.sh"
+  echo "Updating the Drive clone ($(cd "$here/.." && pwd)) …"
+  bash "$repo/tools/update-drive.sh" --yes --repo "$(cd "$here/.." && pwd)"
 fi
