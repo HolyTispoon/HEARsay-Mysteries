@@ -12,7 +12,7 @@ BODONI = "/System/Library/Fonts/Supplemental/Bodoni 72.ttc"
 DIDOT = "/System/Library/Fonts/Supplemental/Didot.ttc"
 
 S = 4  # supersample, then shrink for smooth edges
-W, H = 1200, 290
+W, H = 1200, 193
 im = Image.new("RGBA", (W * S, H * S), (0, 0, 0, 0))
 d = ImageDraw.Draw(im)
 
@@ -36,18 +36,18 @@ def centred(text, font, y, fill, tracking=0):
     return sum(widths) / S
 
 # Rules above: thin over thick
-rule(20, 2); rule(28, 7)
+rule(12, 2); rule(18, 5)
 
 # Title
-title = ImageFont.truetype(BODONI, 190 * S, index=2)
+title = ImageFont.truetype(BODONI, 128 * S, index=2)
 tw = title.getlength("The Blank") / S
 top = title.getbbox("The Blank")[1] / S
-d.text(((W - tw) / 2 * S, (48 - top) * S), "The Blank", font=title, fill=NAVY)
+d.text(((W - tw) / 2 * S, (34 - top) * S), "The Blank", font=title, fill=NAVY)
 
 # Tagline between two short rules with stars
-tag = ImageFont.truetype(DIDOT, 23 * S, index=2)
-tag_w = centred("THE STUDENT NEWSPAPER OF BLANK UNIVERSITY", tag, 212, NAVY, tracking=4)
-ty = 226
+tag = ImageFont.truetype(DIDOT, 18 * S, index=2)
+tag_w = centred("THE STUDENT NEWSPAPER OF BLANK UNIVERSITY", tag, 142, NAVY, tracking=4)
+ty = 153
 for side in (-1, 1):
     inner = W / 2 + side * (tag_w / 2 + 22)
     outer = 40 if side < 0 else W - 40
@@ -56,7 +56,7 @@ for side in (-1, 1):
     star(inner + side * 6, ty, 8)
 
 # Rules below: thick over thin
-rule(256, 7); rule(268, 2)
+rule(173, 5); rule(181, 2)
 
 out = im.resize((W, H), Image.LANCZOS)
 out.save(sys.argv[1])

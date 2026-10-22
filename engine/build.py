@@ -150,6 +150,7 @@ def scenario_json(d, article=None, asset_dir="assets"):
         "logo": d.LOGO,
         "masthead": d.MASTHEAD,
         "start_image": d.START_IMAGE,
+        "news_art": d.NEWS_ART,
         "article": article_json(d, article),
         "rank_exact": d.FACTS["rank_exact"],
         "rank_near": d.FACTS["rank_near"],

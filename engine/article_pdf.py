@@ -23,10 +23,10 @@ CSS = """
 :root { --paper: #fff; --ink: #1d2126; --soft: #4a5058; --navy: #062843; --gold-light: #d3a753; --rule: #c9c4b6; }
 html { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 body { margin: 0; color: var(--ink); font: 9.6pt/1.42 Georgia, "Times New Roman", serif; }
-.masthead { display: block; width: 100%; height: auto; padding-bottom: 6pt; border-bottom: 1pt solid var(--navy); }
-h1 { margin: 14pt 0 0; font: 700 44pt/1 "Bodoni 72", Didot, "Bodoni MT", Georgia, serif; color: var(--navy); text-wrap: balance; }
-.deck { margin: 10pt 0 0; max-width: 40em; font: italic 14pt/1.35 Georgia, serif; color: var(--soft); text-wrap: balance; }
-.byline { margin: 12pt 0 0; padding: 6pt 0; border-top: 1pt solid var(--rule); border-bottom: 1pt solid var(--rule);
+.masthead { display: block; width: 100%; height: auto; padding-bottom: 5pt; border-bottom: 1pt solid var(--navy); }
+h1 { margin: 10pt 0 0; font: 700 38pt/1 "Bodoni 72", Didot, "Bodoni MT", Georgia, serif; color: var(--navy); text-wrap: balance; }
+.deck { margin: 7pt 0 0; font: italic 12pt/1.35 Georgia, serif; color: var(--soft); }
+.byline { margin: 9pt 0 0; padding: 6pt 0; border-top: 1pt solid var(--rule); border-bottom: 1pt solid var(--rule);
           font: 500 8pt/1.4 "Helvetica Neue", Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; }
 .story { margin-top: 14pt; columns: 3; column-gap: 20pt; column-rule: 1pt solid var(--rule); text-align: justify; hyphens: auto; }
 .story p { margin: 0 0 .7em; text-indent: 1.4em; }
@@ -34,9 +34,10 @@ h1 { margin: 14pt 0 0; font: 700 44pt/1 "Bodoni 72", Didot, "Bodoni MT", Georgia
 .story p:first-child::first-letter { float: left; font: 700 4.2em/.8 "Bodoni 72", Didot, Georgia, serif; color: var(--navy); padding: .06em .08em 0 0; }
 .story blockquote { break-inside: avoid; margin: .3em 0 1em; padding: 9pt 11pt; background: var(--navy); color: var(--paper);
                     text-align: left; hyphens: manual; font-style: italic; }
-figure { margin: 14pt 0 0; }
-figure svg, figure img { display: block; width: 100%; height: auto; max-height: 2.1in; object-fit: contain; border: 1pt solid var(--rule); }
-figcaption { margin-top: 5pt; font: 8.5pt/1.4 Georgia, serif; color: var(--soft); }
+/* the illustration at half the old height, its caption beside it */
+figure { margin: 12pt 0 0; display: flex; align-items: flex-end; gap: 12pt; }
+figure svg, figure img { display: block; flex: none; width: auto; height: 1.05in; border: 1pt solid var(--rule); }
+figcaption { flex: 1; font: 8.5pt/1.4 Georgia, serif; color: var(--soft); }
 figcaption b { font: 700 7pt/1 "Helvetica Neue", Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--navy); margin-right: 5pt; }
 .panel { break-inside: avoid; margin: .3em 0 1em; padding: 8pt 10pt; border: 1pt solid var(--navy); text-align: left; hyphens: manual; }
 .panel h2 { margin: 0 0 6pt; font: 700 7.5pt/1 "Helvetica Neue", Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--navy); }
