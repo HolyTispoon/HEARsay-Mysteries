@@ -150,7 +150,7 @@ def read_matrix(path, facts=None):
     Q = {q["id"]: q for q in questions}
 
     # Witnesses
-    wcols = ["ID", "Name", "Role", "Public background card", "Position on the CCC", "Withheld secret", "Tripwire", "Tripwire question",
+    wcols = ["ID", "Name", "Background", "Public background card", "Position on the CCC", "Withheld secret", "Tripwire", "Tripwire question",
              "Walk-away text", "Receptiveness rank", "Receptive on", "Location", "Portrait"]
     wrows = _keyed(_sheet(wb, "Witnesses", wcols, errors), "ID", "Witnesses", errors)
     witnesses, tripwire_responses = [], {}
@@ -163,7 +163,7 @@ def read_matrix(path, facts=None):
             rank = 0
         witnesses.append({
             "id": k, "name": need(r["Name"], f"{where_}: Name"), "portrait": need(r["Portrait"], f"{where_}: Portrait"),
-            "role": need(r["Role"], f"{where_}: Role"), "public_card": need(r["Public background card"], f"{where_}: Public background card"),
+            "background": need(r["Background"], f"{where_}: Background"), "public_card": need(r["Public background card"], f"{where_}: Public background card"),
             "stance": r["Position on the CCC"], "secret": r["Withheld secret"], "tripwire": need(r["Tripwire"], f"{where_}: Tripwire"),
             "receptiveness_rank": rank, "receptive_questions": _ids(r["Receptive on"]),
             "location": need(r["Location"], f"{where_}: Location")})

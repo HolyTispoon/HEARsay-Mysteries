@@ -136,7 +136,7 @@ def expected(s):
         texts.append((f"{q['id']} question", q["text"]))
     for w in s.WITNESSES:
         n = w["name"]
-        texts += [(f"{n}: role", w["role"]), (f"{n}: public card", w["public_card"]), (f"{n}: position on the CCC", w["stance"]),
+        texts += [(f"{n}: background", w["background"]), (f"{n}: public card", w["public_card"]), (f"{n}: position on the CCC", w["stance"]),
                   (f"{n}: secret", w["secret"]), (f"{n}: location", w["location"]), (f"{n}: portrait", w["portrait"]),
                   (f"{n}: walk-away text", s.TRIPWIRE_RESPONSES[w["id"]])]
         for qid, a in s.RESPONSES[w["id"]].items():

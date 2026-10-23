@@ -416,7 +416,7 @@ Config.passages.nobr = false;
 				portrait(w, "small"),
 				el("div", { class: "hs-card-body" },
 					el("div", { class: "hs-name" }, w.name),
-					el("div", { class: "hs-role" }, w.role),
+					el("div", { class: "hs-background" }, w.background),
 					el("div", { class: "hs-loc" }, w.location),
 					el("div", { class: "hs-state" }, status))));
 		}
@@ -434,7 +434,7 @@ Config.passages.nobr = false;
 				portrait(w),
 				el("div", null,
 					el("h2", null, w.name),
-					el("div", { class: "hs-role" }, w.role),
+					el("div", { class: "hs-background" }, w.background),
 					el("div", { class: "hs-loc" }, T("interview.found_at", { location: w.location })),
 					para(w.public_card, "hs-cardtext"))));
 		if (isClosed(w.id)) {
@@ -793,7 +793,7 @@ blockquote { margin: 1em 0; padding: .6em 1em; background: var(--panel); border-
 .hs-card { display: flex; gap: .7em; text-align: left; padding: .6em; align-items: flex-start; }
 .hs-card.closed { opacity: .55; }
 .hs-name { font-weight: bold; }
-.hs-role, .hs-loc, .hs-state { font-size: .88em; color: var(--muted); }
+.hs-background, .hs-loc, .hs-state { font-size: .88em; color: var(--muted); }
 .hs-state { margin-top: .3em; color: var(--accent-2); }
 .hs-portrait { width: 11em; height: auto; border-radius: 6px; border: 1px solid var(--line); flex-shrink: 0; }
 .hs-portrait.small { width: 4.5em; }
