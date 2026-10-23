@@ -23,9 +23,15 @@
 
 
 :: StoryMenu
+<<if setup.hs.started()>>
 <<link `setup.hs.T("menu.map")`>><<run setup.hs.go("Map")>><</link>>
 <<link `setup.hs.T("menu.evidence")`>><<run setup.hs.go("Evidence Board")>><</link>>
 <<link `setup.hs.T("menu.case_file")`>><<run setup.hs.go("Case File")>><</link>>
+<<else>>
+<a class="hs-locked" aria-disabled="true"><<= setup.hs.T("menu.map")>></a>
+<a class="hs-locked" aria-disabled="true"><<= setup.hs.T("menu.evidence")>></a>
+<a class="hs-locked" aria-disabled="true"><<= setup.hs.T("menu.case_file")>></a>
+<</if>>
 <<if setup.scenario.article>><<link `setup.hs.T("menu.newspaper")`>><<run setup.hs.go("Newspaper")>><</link>><</if>>
 <<link `setup.hs.T("menu.hear")`>><<run setup.hs.go("HEAR Guide")>><</link>>
 <<link `setup.hs.T("menu.rules")`>><<run setup.hs.go("Rules Summary")>><</link>>
@@ -202,6 +208,9 @@ Config.passages.nobr = false;
 		const name = ev.passage.title;
 		if (!REF.includes(name)) V().lastMain = name;
 	});
+	/* The sidebar's map, evidence board and case file open once the Hook's button has started the investigation. */
+	const INTRO = ["Start", "Rules", "Hook"];
+	const started = () => !INTRO.includes(V().lastMain);
 
 	/* ---------- actions ---------- */
 	function openWitness(wid) {
@@ -411,7 +420,7 @@ Config.passages.nobr = false;
 					el("div", { class: "hs-loc" }, w.location),
 					el("div", { class: "hs-state" }, status))));
 		}
-		out.appendChild(grid);
+		out.append(grid, el("img", { class: "hs-map", src: s.asset_dir + "/" + s.map, alt: T("common.map_alt") }));
 		if (!forceSubmitIfBroke(out)) out.appendChild(actionRow(btn(T("common.evidence"), () => go("Evidence Board")), solveButton()));
 	};
 
@@ -671,7 +680,7 @@ Config.passages.nobr = false;
 			hearBadge()));
 	}
 
-	setup.hs = { view, go, ask, openWitness, chooseFollowUp, caption, outcome, T };
+	setup.hs = { view, go, started, ask, openWitness, chooseFollowUp, caption, outcome, T };
 })();
 
 
@@ -687,6 +696,7 @@ body { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; font
 #ui-bar-toggle, #ui-bar-history [id|=history] { color: var(--ink); border-color: var(--line); }
 #menu li a { color: var(--accent); }
 #menu li a:hover { background: #e4d6b8; color: var(--ink); }
+#menu li a.hs-locked, #menu li a.hs-locked:hover { color: var(--muted); opacity: .55; background: none; cursor: default; }
 #menu ul { border-color: var(--line); }
 #menu li:not(:first-child) { border-top-color: var(--line); }
 #ui-dialog { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; }
