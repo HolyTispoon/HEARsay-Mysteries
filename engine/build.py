@@ -145,6 +145,7 @@ def scenario_json(d, article=None, asset_dir="assets"):
         "pitch": d.PITCH or p["mystery"],
         "budget": d.QUESTION_BUDGET,
         "followup_bonus": d.FOLLOWUP_BONUS,
+        "submissions": d.FACTS["submissions"],
         "asset_dir": asset_dir,
         "map": d.MAP,
         "logo": d.LOGO,
