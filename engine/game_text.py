@@ -45,13 +45,13 @@ TEXT_COLUMNS = ["Key", "Screen", "Text", "Placeholders"]
 # Keys that come from the rules and HEAR tabs, so not from the Sheet
 DOC_KEYS = re.compile(r"^(rules\.(title|\d+)|hear\.(title|intro|unreceptive|[HEAR]\.(move|text)))$")
 # Placeholders every text can use; the engine fills them from the scenario and the facts.
-GLOBAL_PLACEHOLDERS = {"budget", "n_witnesses", "n_questions", "n_major", "bonus", "rank_exact", "rank_near", "ccc", "title"}
+GLOBAL_PLACEHOLDERS = {"budget", "n_witnesses", "n_questions", "n_major", "rank_exact", "rank_near", "ccc", "title"}
 CHECKS = {"verbatim", "paraphrase", "label"}
 # Facts the build and the engine rely on.
 REQUIRED_FACTS = ["witnesses", "questions", "question_budget", "tripwires_per_witness", "clues_per_witness",
                   "red_herrings_per_witness", "clues", "givers_per_clue", "red_herrings", "givers_per_red_herring",
                   "rh_set_min", "rh_set_max", "major_clues", "clues_per_major", "followups_per_witness", "submissions",
-                  "followup_bonus", "rank_exact", "rank_near"]
+                  "rank_exact", "rank_near"]
 
 
 def _paragraph_text(p):

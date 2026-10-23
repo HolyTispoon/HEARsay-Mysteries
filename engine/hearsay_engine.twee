@@ -7,9 +7,10 @@
 <<set $followUpOrder to {}>>
 <<set $majorClues to 0>>
 <<set $notebook to []>>
-<<set $bonus to 0>>
 <<set $solved to false>>
 <<set $finalAnswer to null>>
+<<set $tries to []>>
+<<set $lastTryWrong to false>>
 <<set $ranking to []>>
 <<set $rankingDone to false>>
 <<set $current to null>>
@@ -163,7 +164,7 @@ Config.passages.nobr = false;
 		const s = S();
 		return Object.assign({
 			budget: s.budget, n_witnesses: s.witnesses.length, n_questions: s.questions.length,
-			n_major: s.major_clues.length, bonus: s.followup_bonus, rank_exact: num(s.rank_exact),
+			n_major: s.major_clues.length, rank_exact: num(s.rank_exact),
 			rank_near: num(s.rank_near), ccc: s.controversy.name, title: s.title
 		}, extra || {});
 	}
@@ -246,8 +247,7 @@ Config.passages.nobr = false;
 				v.lastFollowUp = { wid: wid, good: true, mc: v.majorClues };
 				v.majorClues += 1;
 			} else {
-				v.bonus += S().followup_bonus;
-				v.lastFollowUp = { wid: wid, good: true, mc: null };
+				v.lastFollowUp = { wid: wid, good: true, mc: null };  // every Major Clue is earned: the explanation only
 			}
 		} else {
 			v.closed.push(wid);
@@ -331,7 +331,7 @@ Config.passages.nobr = false;
 		/* rules.1, rules.2, … in number order, so rules can be added or removed in the framework Doc */
 		const keys = Object.keys(setup.gameText || {}).filter(k => /^rules\.\d+$/.test(k))
 			.sort((a, b) => Number(a.split(".")[1]) - Number(b.split(".")[1]));
-		out.append(el("ol", { class: "hs-rules" }, keys.map(k => el("li", null, T(k)))));
+		out.append(el("ol", { class: "hs-rules" }, keys.map(k => el("li", null, R(k)))));
 		if (firstTime) out.append(actionRow(btn(T("rules.next"), () => go(S().article ? "Newspaper" : "Hook"), "hs-primary")));
 		else out.append(actionRow(btn(T("common.return"), () => go(V().lastMain || "Map"))));
 	};
@@ -551,15 +551,23 @@ Config.passages.nobr = false;
 			if (v.followUpUsed[w.id] === "good") bits.push(T("evidence.good_followup"));
 			return el("li", null, el("strong", null, w.name), ": " + bits.join(", "));
 		})));
-		if (v.bonus) out.appendChild(para(T("evidence.bonus", { points: v.bonus }), "hs-note"));
 		out.appendChild(actionRow(btn(T("common.return"), () => go(v.lastMain || "Map")), btn(T("common.map"), () => go("Map"))));
 	};
+
+	/* Each try uses one of the facts' submissions. A wrong one says only that it is wrong, not which part. */
+	const triesLeft = () => S().submissions - (V().tries || []).length;
+	const isSolution = a => a.who === S().puzzle.final_answer.who && a.where === S().puzzle.final_answer.where;
 
 	view.submission = function (out) {
 		const v = V(), s = S();
 		if (v.solved) { go("Result"); return; }
-		out.append(statusBar(), el("h2", null, T("submit.title")), para(s.puzzle.mystery, "hs-mystery"),
-			para(T("submit.once"), "hs-note"));
+		const tries = v.tries || [];
+		out.append(statusBar(), el("h2", null, T("submit.title")), para(s.puzzle.mystery, "hs-mystery"));
+		if (v.lastTryWrong) out.appendChild(el("div", { class: "hs-alert" }, R("submit.wrong", { left: triesLeft() })));
+		v.lastTryWrong = false;
+		if (tries.length) out.appendChild(el("ul", { class: "hs-notes" },
+			tries.map(t => el("li", null, T("submit.tried", { who: t.who, where: t.where })))));
+		out.appendChild(para(T("submit.tries", { left: triesLeft(), total: s.submissions }), "hs-note"));
 		const mk = (label, opts) => {
 			const sel = el("select", { class: "hs-select" },
 				el("option", { value: "" }, T("submit.choose")), opts.map(o => el("option", { value: o }, o)));
@@ -571,9 +579,19 @@ Config.passages.nobr = false;
 		out.append(whoL, whereL, msg);
 		const submit = btn(T("submit.submit"), () => {
 			if (!whoS.value || !whereS.value) { msg.textContent = T("submit.both"); msg.style.display = ""; return; }
-			v.finalAnswer = { who: whoS.value, where: whereS.value };
-			v.solved = true;
-			Engine.play("Result");
+			const answer = { who: whoS.value, where: whereS.value };
+			if (tries.some(t => t.who === answer.who && t.where === answer.where)) {
+				msg.textContent = T("submit.repeat"); msg.style.display = ""; return;
+			}
+			v.tries = tries.concat([answer]);
+			v.finalAnswer = answer;
+			if (isSolution(answer) || triesLeft() <= 0) {
+				v.solved = true;
+				Engine.play("Result");
+			} else {
+				v.lastTryWrong = true;
+				Engine.play("Submission");
+			}
 		}, "hs-primary");
 		const acts = [submit];
 		if (v.questionsLeft > 0) acts.unshift(btn(T("submit.keep_going"), () => go(v.lastMain && v.lastMain !== "Submission" ? v.lastMain : "Map")));
@@ -582,7 +600,7 @@ Config.passages.nobr = false;
 
 	function outcome() {
 		const v = V(), s = S();
-		if (!v.finalAnswer) return null;
+		if (!v.solved || !v.finalAnswer) return null;
 		const who = v.finalAnswer.who === s.puzzle.final_answer.who;
 		const where = v.finalAnswer.where === s.puzzle.final_answer.where;
 		return who && where ? "correct" : (who ? "right_person_wrong_place" : "wrong");
@@ -644,13 +662,16 @@ Config.passages.nobr = false;
 		if (!v.rankingDone) { go(v.solved ? "Ranking" : "Map"); return; }
 		const o = outcome();
 		const rs = rankingScore();
+		const used = (v.tries || []).length;
+		const solvePoints = o === "correct" ? s.submissions - used + 1 : 0;  // 3, 2 or 1 for a solution on try 1, 2 or 3
 		const fmt = x => (x % 1 ? x.toFixed(1) : String(x));
 		out.append(...logo("hs-crest"), el("h2", null, T("ending.title")),
 			el("div", { class: "hs-score" },
 				el("div", null, R("ending.verdict", { verdict: T("ending.verdict." + o) })),
+				el("div", null, R("ending.tries", { n: used, total: s.submissions })),
+				el("div", null, R("ending.solve_points", { points: solvePoints, total: s.submissions })),
 				el("div", null, R("ending.major", { n: v.majorClues })),
 				el("div", null, R("ending.ranking", { score: fmt(rs) })),
-				el("div", null, R("ending.bonus", { points: v.bonus })),
 				el("div", null, R("ending.used", { n: s.budget - v.questionsLeft }))));
 		out.appendChild(el("h3", null, T("ending.table_title")));
 		out.appendChild(el("table", { class: "hs-table" },
@@ -676,7 +697,8 @@ Config.passages.nobr = false;
 		const v = V(), s = S();
 		if (!s) return;
 		out.append(el("div", { class: "hs-cap" },
-			v.solved ? el("div", null, T("sidebar.submitted")) : el("div", null, R("sidebar.questions_left", { left: v.questionsLeft })),
+			...(v.solved ? [el("div", null, T("sidebar.submitted"))]
+				: [el("div", null, R("sidebar.questions_left", { left: v.questionsLeft })), el("div", null, R("sidebar.tries_left", { left: triesLeft() }))]),
 			hearBadge()));
 	}
 
