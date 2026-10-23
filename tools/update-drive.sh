@@ -28,7 +28,7 @@ while [ $# -gt 0 ]; do
     *) echo "Unknown option: $1 (see the top of $0)"; exit 1 ;;
   esac
 done
-g() { git -C "$repo" -c core.quotepath=false "$@"; }  # quotepath: show "–" in file names, not \342\200\223
+g() { git --no-pager -C "$repo" -c core.quotepath=false "$@"; }  # no-pager: never stop for a keypress; quotepath: show "–" in file names, not \342\200\223
 
 if $yes; then
   echo "Fetching main from GitHub …"
