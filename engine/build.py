@@ -166,7 +166,7 @@ def scenario_json(d, article=None, asset_dir="assets"):
         "controversy": {k: d.CONTROVERSY[k] for k in ("name", "summary", "clause", "clause_explainer")},
         "setting": {"player_role": d.SETTING["player_role"], "briefing": d.SETTING["briefing"]},
         "questions": [{"id": q["id"], "text": q["text"]} for q in d.QUESTIONS],
-        "witnesses": [{k: w[k] for k in ("id", "name", "portrait", "role", "public_card", "location", "tripwire")}
+        "witnesses": [{k: w[k] for k in ("id", "name", "portrait", "background", "public_card", "location", "tripwire")}
                       for w in d.WITNESSES],
         "responses": {wid: {qid: {"item": a["item"], "text": a["text"]} for qid, a in qs.items()}
                       for wid, qs in d.RESPONSES.items()},
