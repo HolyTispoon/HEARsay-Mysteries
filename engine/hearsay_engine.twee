@@ -28,12 +28,13 @@
 <<link `setup.hs.T("menu.map")`>><<run setup.hs.go("Map")>><</link>>
 <<link `setup.hs.T("menu.evidence")`>><<run setup.hs.go("Evidence Board")>><</link>>
 <<link `setup.hs.T("menu.case_file")`>><<run setup.hs.go("Case File")>><</link>>
+<<if setup.scenario.article>><<link `setup.hs.T("menu.newspaper")`>><<run setup.hs.go("Newspaper")>><</link>><</if>>
 <<else>>
 <a class="hs-locked" aria-disabled="true"><<= setup.hs.T("menu.map")>></a>
 <a class="hs-locked" aria-disabled="true"><<= setup.hs.T("menu.evidence")>></a>
 <a class="hs-locked" aria-disabled="true"><<= setup.hs.T("menu.case_file")>></a>
+<<if setup.scenario.article>><a class="hs-locked" aria-disabled="true"><<= setup.hs.T("menu.newspaper")>></a><</if>>
 <</if>>
-<<if setup.scenario.article>><<link `setup.hs.T("menu.newspaper")`>><<run setup.hs.go("Newspaper")>><</link>><</if>>
 <<link `setup.hs.T("menu.hear")`>><<run setup.hs.go("HEAR Guide")>><</link>>
 <<link `setup.hs.T("menu.rules")`>><<run setup.hs.go("Rules Summary")>><</link>>
 
@@ -209,7 +210,7 @@ Config.passages.nobr = false;
 		const name = ev.passage.title;
 		if (!REF.includes(name)) V().lastMain = name;
 	});
-	/* The sidebar's map, evidence board and case file open once the Hook's button has started the investigation. */
+	/* The sidebar's map, evidence board, case file and newspaper open once the Hook's button has started the investigation. */
 	const INTRO = ["Start", "Rules", "Hook"];
 	const started = () => !INTRO.includes(V().lastMain);
 
@@ -306,8 +307,7 @@ Config.passages.nobr = false;
 			el("dd", null, T("hear." + L + ".text"))]));
 	}
 
-	/* The framework's order (3.1–3.2): an introduction (the game and HEAR on Start, then the Rules), then the Hook.
-	   A scenario with a newspaper article shows it between the Rules and the Hook. */
+	/* The framework's order (3.1–3.2): an introduction (the game and HEAR on Start, then the Rules), then the Hook. */
 	view.start = function (out) {
 		out.append(
 			el("div", { class: "hs-title" },
@@ -332,7 +332,7 @@ Config.passages.nobr = false;
 		const keys = Object.keys(setup.gameText || {}).filter(k => /^rules\.\d+$/.test(k))
 			.sort((a, b) => Number(a.split(".")[1]) - Number(b.split(".")[1]));
 		out.append(el("ol", { class: "hs-rules" }, keys.map(k => el("li", null, R(k)))));
-		if (firstTime) out.append(actionRow(btn(T("rules.next"), () => go(S().article ? "Newspaper" : "Hook"), "hs-primary")));
+		if (firstTime) out.append(actionRow(btn(T("rules.next"), () => go("Hook"), "hs-primary")));
 		else out.append(actionRow(btn(T("common.return"), () => go(V().lastMain || "Map"))));
 	};
 
@@ -350,7 +350,7 @@ Config.passages.nobr = false;
 	};
 
 	/* The scenario's newspaper article (the packet's "Newspaper article" section), under its masthead (matrix Settings:
-	   Masthead). Reached from the Rules the first time, when it leads on to the Hook; from the sidebar after that. */
+	   Masthead). Reached from the sidebar once the investigation has started. */
 	view.newspaper = function (out) {
 		const s = S(), a = s.article;
 		if (!a) { go(V().lastMain || "Start"); return; }
@@ -360,10 +360,7 @@ Config.passages.nobr = false;
 		if (a.panel) story.splice(a.panel.after, 0, el("aside", { class: "hs-paper-panel" },
 			el("h4", null, a.panel.title),
 			el("ul", null, a.panel.items.map(i => el("li", null, el("b", null, i.name), i.text)))));
-		const firstTime = V().lastMain === "Rules";
 		out.append(
-			/* the heading says the article stays in the sidebar, so it shows only on the way from the Rules */
-			...(firstTime ? [el("h3", null, T("newspaper.intro"))] : []),
 			el("article", { class: "hs-paper" },
 				s.masthead ? el("img", { class: "hs-masthead", src: s.asset_dir + "/" + s.masthead, alt: T("newspaper.masthead_alt") }) : null,
 				el("h2", { class: "hs-headline" }, a.headline),
@@ -374,9 +371,7 @@ Config.passages.nobr = false;
 					el("img", { src: s.asset_dir + "/" + s.news_art, alt: "" }),
 					a.caption ? el("figcaption", null, a.caption) : null) : null,
 				el("div", { class: "hs-columns" }, story)),
-			actionRow(firstTime
-				? btn(T("newspaper.next"), () => go("Hook"), "hs-primary")
-				: btn(T("common.return"), () => go(V().lastMain || "Map"))));
+			actionRow(btn(T("common.return"), () => go(V().lastMain || "Map"))));
 	};
 
 	view.hearGuide = function (out) {

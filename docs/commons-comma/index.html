@@ -346,7 +346,7 @@ Config.passages.nobr = false;
 		const name = ev.passage.title;
 		if (!REF.includes(name)) V().lastMain = name;
 	});
-	/* The sidebar's map, evidence board and case file open once the Hook's button has started the investigation. */
+	/* The sidebar's map, evidence board, case file and newspaper open once the Hook's button has started the investigation. */
 	const INTRO = ["Start", "Rules", "Hook"];
 	const started = () => !INTRO.includes(V().lastMain);
 
@@ -443,8 +443,7 @@ Config.passages.nobr = false;
 			el("dd", null, T("hear." + L + ".text"))]));
 	}
 
-	/* The framework's order (3.1–3.2): an introduction (the game and HEAR on Start, then the Rules), then the Hook.
-	   A scenario with a newspaper article shows it between the Rules and the Hook. */
+	/* The framework's order (3.1–3.2): an introduction (the game and HEAR on Start, then the Rules), then the Hook. */
 	view.start = function (out) {
 		out.append(
 			el("div", { class: "hs-title" },
@@ -469,7 +468,7 @@ Config.passages.nobr = false;
 		const keys = Object.keys(setup.gameText || {}).filter(k => /^rules\.\d+$/.test(k))
 			.sort((a, b) => Number(a.split(".")[1]) - Number(b.split(".")[1]));
 		out.append(el("ol", { class: "hs-rules" }, keys.map(k => el("li", null, R(k)))));
-		if (firstTime) out.append(actionRow(btn(T("rules.next"), () => go(S().article ? "Newspaper" : "Hook"), "hs-primary")));
+		if (firstTime) out.append(actionRow(btn(T("rules.next"), () => go("Hook"), "hs-primary")));
 		else out.append(actionRow(btn(T("common.return"), () => go(V().lastMain || "Map"))));
 	};
 
@@ -487,7 +486,7 @@ Config.passages.nobr = false;
 	};
 
 	/* The scenario's newspaper article (the packet's "Newspaper article" section), under its masthead (matrix Settings:
-	   Masthead). Reached from the Rules the first time, when it leads on to the Hook; from the sidebar after that. */
+	   Masthead). Reached from the sidebar once the investigation has started. */
 	view.newspaper = function (out) {
 		const s = S(), a = s.article;
 		if (!a) { go(V().lastMain || "Start"); return; }
@@ -497,10 +496,7 @@ Config.passages.nobr = false;
 		if (a.panel) story.splice(a.panel.after, 0, el("aside", { class: "hs-paper-panel" },
 			el("h4", null, a.panel.title),
 			el("ul", null, a.panel.items.map(i => el("li", null, el("b", null, i.name), i.text)))));
-		const firstTime = V().lastMain === "Rules";
 		out.append(
-			/* the heading says the article stays in the sidebar, so it shows only on the way from the Rules */
-			...(firstTime ? [el("h3", null, T("newspaper.intro"))] : []),
 			el("article", { class: "hs-paper" },
 				s.masthead ? el("img", { class: "hs-masthead", src: s.asset_dir + "/" + s.masthead, alt: T("newspaper.masthead_alt") }) : null,
 				el("h2", { class: "hs-headline" }, a.headline),
@@ -511,9 +507,7 @@ Config.passages.nobr = false;
 					el("img", { src: s.asset_dir + "/" + s.news_art, alt: "" }),
 					a.caption ? el("figcaption", null, a.caption) : null) : null,
 				el("div", { class: "hs-columns" }, story)),
-			actionRow(firstTime
-				? btn(T("newspaper.next"), () => go("Hook"), "hs-primary")
-				: btn(T("common.return"), () => go(V().lastMain || "Map"))));
+			actionRow(btn(T("common.return"), () => go(V().lastMain || "Map"))));
 	};
 
 	view.hearGuide = function (out) {
@@ -862,12 +856,13 @@ Config.passages.nobr = false;
 &lt;&lt;link `setup.hs.T(&quot;menu.map&quot;)`&gt;&gt;&lt;&lt;run setup.hs.go(&quot;Map&quot;)&gt;&gt;&lt;&lt;/link&gt;&gt;
 &lt;&lt;link `setup.hs.T(&quot;menu.evidence&quot;)`&gt;&gt;&lt;&lt;run setup.hs.go(&quot;Evidence Board&quot;)&gt;&gt;&lt;&lt;/link&gt;&gt;
 &lt;&lt;link `setup.hs.T(&quot;menu.case_file&quot;)`&gt;&gt;&lt;&lt;run setup.hs.go(&quot;Case File&quot;)&gt;&gt;&lt;&lt;/link&gt;&gt;
+&lt;&lt;if setup.scenario.article&gt;&gt;&lt;&lt;link `setup.hs.T(&quot;menu.newspaper&quot;)`&gt;&gt;&lt;&lt;run setup.hs.go(&quot;Newspaper&quot;)&gt;&gt;&lt;&lt;/link&gt;&gt;&lt;&lt;/if&gt;&gt;
 &lt;&lt;else&gt;&gt;
 &lt;a class=&quot;hs-locked&quot; aria-disabled=&quot;true&quot;&gt;&lt;&lt;= setup.hs.T(&quot;menu.map&quot;)&gt;&gt;&lt;/a&gt;
 &lt;a class=&quot;hs-locked&quot; aria-disabled=&quot;true&quot;&gt;&lt;&lt;= setup.hs.T(&quot;menu.evidence&quot;)&gt;&gt;&lt;/a&gt;
 &lt;a class=&quot;hs-locked&quot; aria-disabled=&quot;true&quot;&gt;&lt;&lt;= setup.hs.T(&quot;menu.case_file&quot;)&gt;&gt;&lt;/a&gt;
+&lt;&lt;if setup.scenario.article&gt;&gt;&lt;a class=&quot;hs-locked&quot; aria-disabled=&quot;true&quot;&gt;&lt;&lt;= setup.hs.T(&quot;menu.newspaper&quot;)&gt;&gt;&lt;/a&gt;&lt;&lt;/if&gt;&gt;
 &lt;&lt;/if&gt;&gt;
-&lt;&lt;if setup.scenario.article&gt;&gt;&lt;&lt;link `setup.hs.T(&quot;menu.newspaper&quot;)`&gt;&gt;&lt;&lt;run setup.hs.go(&quot;Newspaper&quot;)&gt;&gt;&lt;&lt;/link&gt;&gt;&lt;&lt;/if&gt;&gt;
 &lt;&lt;link `setup.hs.T(&quot;menu.hear&quot;)`&gt;&gt;&lt;&lt;run setup.hs.go(&quot;HEAR Guide&quot;)&gt;&gt;&lt;&lt;/link&gt;&gt;
 &lt;&lt;link `setup.hs.T(&quot;menu.rules&quot;)`&gt;&gt;&lt;&lt;run setup.hs.go(&quot;Rules Summary&quot;)&gt;&gt;&lt;&lt;/link&gt;&gt;</tw-passagedata><tw-passagedata pid="4" name="Start" tags="" position="475,100" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.start(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="5" name="Hook" tags="" position="600,100" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.hook(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="6" name="Newspaper" tags="ref" position="725,100" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.newspaper(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="7" name="Rules" tags="" position="850,100" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.rules(output, true)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="8" name="Map" tags="" position="975,100" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.map(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="9" name="Interview" tags="" position="1100,100" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.interview(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="10" name="Answer" tags="" position="1225,100" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.answer(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="11" name="Follow-up" tags="" position="100,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.followUp(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="12" name="Follow-up Result" tags="" position="225,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.followUpResult(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="13" name="Evidence Board" tags="ref" position="350,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.evidence(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="14" name="Submission" tags="" position="475,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.submission(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="15" name="Result" tags="" position="600,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.result(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="16" name="Ranking" tags="" position="725,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.ranking(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="17" name="Ending" tags="" position="850,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.ending(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="18" name="Case File" tags="ref" position="975,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.caseFile(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="19" name="HEAR Guide" tags="ref" position="1100,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.hearGuide(output)&lt;&lt;/script&gt;&gt;</tw-passagedata><tw-passagedata pid="20" name="Rules Summary" tags="ref" position="1225,225" size="100,100">&lt;&lt;script&gt;&gt;setup.hs.view.rules(output, false)&lt;&lt;/script&gt;&gt;</tw-passagedata></tw-storydata>
 	<script id="script-sugarcube" type="text/javascript">
