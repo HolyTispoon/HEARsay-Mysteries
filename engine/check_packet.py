@@ -121,6 +121,7 @@ def expected(s):
     W = {w["id"]: w for w in s.WITNESSES}
     texts = [("Title", s.TITLE), ("The mystery", s.PUZZLE["mystery"]), ("The solution", s.PUZZLE["solution"]),
              ("the Hook: Situation", s.SETTING["player_role"]), ("the Hook: Assignment", s.SETTING["briefing"]),
+             ("the Hook: Reminder", s.SETTING["reminder"]),
              ("the Hook: CCC", s.CONTROVERSY["name"]), ("the Hook: CCC summary", s.CONTROVERSY["summary"]),
              ("the Hook: Clause", s.CONTROVERSY["clause"]), ("the Hook: Clause explainer", s.CONTROVERSY["clause_explainer"]),
              ("Map file", s.MAP)]
@@ -162,7 +163,8 @@ def expected(s):
             flag = "receptive" if qid in w["receptive_questions"] else "unreceptive"
             patterns.append((f"{w['name']} {qid} label [{a['item']}, {kind}; opinion {flag}]", w["name"], qid,
                              rf"\b{qid}\s*\[\s*{a['item']}\s*,\s*{kind}\s*;\s*opinion\s+{flag}\s*\]"))
-    return [(l, norm(t)) for l, t in texts if t], patterns
+    # a cell of several paragraphs (split at blank lines, as the game shows them) must match consecutive packet paragraphs
+    return [(l, "\n".join(norm(x) for x in re.split(r"\n\s*\n", t) if x.strip())) for l, t in texts if t], patterns
 
 
 def check(matrix_path, packet_path, facts=None):
