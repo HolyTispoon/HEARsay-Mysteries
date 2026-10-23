@@ -420,8 +420,9 @@ Config.passages.nobr = false;
 					el("div", { class: "hs-loc" }, w.location),
 					el("div", { class: "hs-state" }, status))));
 		}
-		out.append(grid, el("img", { class: "hs-map", src: s.asset_dir + "/" + s.map, alt: T("common.map_alt") }));
+		out.appendChild(grid);
 		if (!forceSubmitIfBroke(out)) out.appendChild(actionRow(btn(T("common.evidence"), () => go("Evidence Board")), solveButton()));
+		out.appendChild(el("img", { class: "hs-map", src: s.asset_dir + "/" + s.map, alt: T("common.map_alt") }));
 	};
 
 	view.interview = function (out) {

@@ -63,7 +63,7 @@ Push every commit as soon as it is made, and keep every pushed branch in an open
 
 ## Engine choices not yet in the Google Doc
 
-History/undo disabled so tripwires stick; ranking 1 per exact place, ½ per place off; follow-up phrasings in random order; the debrief reveals the solution, Major Clues and each red-herring set's resolution; Follow-up Result, Case File, Newspaper and Sidebar are engine additions (Newspaper: the packet's newspaper article, shown once between the Rules and the Hook and always in the sidebar). Open with the user: the doc puts the big reveal before the ranking, but players who answer wrongly get the full story only in the debrief after ranking; the HEAR guide paraphrases the doc's table.
+History/undo disabled so tripwires stick; ranking 1 per exact place, ½ per place off; follow-up phrasings in random order; the debrief reveals the solution, Major Clues and each red-herring set's resolution; Follow-up Result, Case File, Newspaper and Sidebar are engine additions (Newspaper: the packet's newspaper article, shown once between the Rules and the Hook and always in the sidebar); the sidebar's Campus map, Evidence board and Case file stay locked until the Hook's button leads to the Map. Open with the user: the doc puts the big reveal before the ranking, but players who answer wrongly get the full story only in the debrief after ranking; the HEAR guide paraphrases the doc's table.
 
 ## Working with the user
 
