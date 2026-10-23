@@ -10,6 +10,7 @@
 <<set $solved to false>>
 <<set $finalAnswer to null>>
 <<set $tries to []>>
+<<set $answerOrder to null>>
 <<set $lastTryWrong to false>>
 <<set $ranking to []>>
 <<set $rankingDone to false>>
@@ -571,8 +572,10 @@ Config.passages.nobr = false;
 				el("option", { value: "" }, T("submit.choose")), opts.map(o => el("option", { value: o }, o)));
 			return [el("label", { class: "hs-label" }, label, sel), sel];
 		};
-		const [whoL, whoS] = mk(s.puzzle.who_label, s.puzzle.who_options);
-		const [whereL, whereS] = mk(s.puzzle.where_label, s.puzzle.where_options);
+		/* the options in random order, so the correct ones don't stand out; the same order every visit */
+		if (!v.answerOrder) v.answerOrder = { who: shuffled(s.puzzle.who_options), where: shuffled(s.puzzle.where_options) };
+		const [whoL, whoS] = mk(s.puzzle.who_label, v.answerOrder.who);
+		const [whereL, whereS] = mk(s.puzzle.where_label, v.answerOrder.where);
 		const msg = el("div", { class: "hs-alert", style: "display:none" });
 		out.append(whoL, whereL, msg);
 		const submit = btn(T("submit.submit"), () => {
@@ -616,17 +619,21 @@ Config.passages.nobr = false;
 			actionRow(btn(T("result.rank_button"), () => Engine.play("Ranking"), "hs-primary")));
 	};
 
+	/* A copy of the list in random order (Fisher–Yates). */
+	function shuffled(list) {
+		const a = list.slice();
+		for (let i = a.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[a[i], a[j]] = [a[j], a[i]];
+		}
+		return a;
+	}
+
 	view.ranking = function (out) {
 		const v = V(), s = S();
 		if (!v.solved) { go("Map"); return; }
 		if (v.rankingDone) { go("Ending"); return; }
-		if (!v.ranking || v.ranking.length !== s.witnesses.length) {
-			v.ranking = s.witnesses.map(w => w.id);
-			for (let i = v.ranking.length - 1; i > 0; i--) {
-				const j = Math.floor(Math.random() * (i + 1));
-				[v.ranking[i], v.ranking[j]] = [v.ranking[j], v.ranking[i]];
-			}
-		}
+		if (!v.ranking || v.ranking.length !== s.witnesses.length) v.ranking = shuffled(s.witnesses.map(w => w.id));
 		out.append(el("h2", null, T("ranking.title")),
 			para(T("ranking.note"), "hs-note"));
 		const list = el("ol", { class: "hs-rank" });
