@@ -342,6 +342,8 @@ Config.passages.nobr = false;
 			el("h2", null, T("hook.assignment")),
 			...paras(s.setting.player_role),
 			el("blockquote", { class: "hs-brief" }, ...logo("hs-letterhead"), ...paras(s.setting.briefing)),
+			/* matrix Passages: the Hook / Reminder (optional) */
+			...(s.setting.reminder ? paras(s.setting.reminder) : []),
 			el("h3", null, T("hook.mystery")),
 			para(s.puzzle.mystery, "hs-mystery"),
 			el("h3", null, T("hook.ccc")));
