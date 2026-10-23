@@ -28,9 +28,9 @@ Steps:
      (scenario_matrix.py), and checks that the packet says the same things as the matrix (check_packet.py).
   4. Writes docs/<Scenario ID>/source/story.twee (Twee 3), with the scenario and the game text written into the
      engine as `setup.scenario` and `setup.gameText`, and compiles it with Tweego into docs/<Scenario ID>/index.html.
-     The newspaper article, if the packet has a 'Newspaper article' tab, comes from the packet (packet_article),
+     The newspaper article, if the packet has a 'Newspaper article' section, comes from the packet (packet_article),
      and is also printed to docs/<Scenario ID>/newspaper-article.pdf (article_pdf.py, with headless Chrome), with
-     the illustration named in the matrix's Settings and the tab's caption and box.
+     the illustration named in the matrix's Settings and the section's caption and box.
   5. Copies the scenario's portraits, map, logo, masthead, Start image and newspaper illustration (if it has them), and the site icons (ICONS), into
      docs/<Scenario ID>/assets/; one of the optional images not in the scenario's assets/ is looked for in SHARED_ASSETS;
      head.html links the icons from the page's <head>.
@@ -52,7 +52,7 @@ SCENARIOS = os.path.join(ROOT, "scenarios")
 DOCS = os.path.join(ROOT, "docs")  # the published site
 sys.path.insert(0, HERE)
 from scenario_matrix import read_matrix, PASSAGE_PARTS
-from check_packet import check as check_packet, norm, packet_article, ARTICLE_TAB
+from check_packet import check as check_packet, norm, packet_article, ARTICLE_SECTION
 from game_text import read_game_text, DEFAULT as GAME_TEXT, FRAMEWORK
 from sources import update_copies
 from check_framework import check as check_framework
@@ -235,7 +235,7 @@ def build_scenario(sid, g, no_packet_check):
     # the masthead only heads the article, so a scenario that names one must have an article
     if d.MASTHEAD and not article:
         sys.exit(f"The matrix names a masthead ({d.MASTHEAD}) but no newspaper article was found in the packet "
-                 f"({os.path.basename(packet)}). Check its '{ARTICLE_TAB}' tab, or remove the Masthead setting.")
+                 f"({os.path.basename(packet)}). Check its '{ARTICLE_SECTION}' section, or remove the Masthead setting.")
     print(f"Newspaper article: {article['headline']}" if article else "No newspaper article in the packet")
 
     out = os.path.join(DOCS, sid)
