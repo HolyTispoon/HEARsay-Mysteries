@@ -4,7 +4,8 @@ Read a HEARsay scenario from its Response Matrix workbook (.xlsx) and check it.
 
     python3 scenario_matrix.py "SCENARIO – Response Matrix.xlsx"
 
-The workbook is the source the game is built from. read_matrix() returns the scenario plus a list of
+The workbook is generated from the scenario's packet (scenario_packet.py) on every build, and the game is built
+from it. read_matrix() returns the scenario plus a list of
 problems: missing fields, broken references, the framework's structural rules (tripwires, clue counts,
 receptiveness ranks, with the numbers taken from the framework Doc's 'Game facts' tab), and places
 where the workbook disagrees with itself (the Grid against the Long table, 'Given by' columns, repeated set
@@ -13,12 +14,12 @@ their header, so their order does not matter.
 
 Needs openpyxl (pip3 install openpyxl).
 """
-import re, sys
+import datetime, io, re, sys, zipfile
 from collections import Counter
 from types import SimpleNamespace
 
 try:
-    from openpyxl import load_workbook
+    from openpyxl import Workbook, load_workbook
 except ImportError:
     sys.exit("This needs openpyxl: pip3 install openpyxl")
 
@@ -67,6 +68,30 @@ def _sheet(wb, name, headers, errors):
             row["_row"] = r
             rows.append(row)
     return rows
+
+
+def write_workbook(sheets, path):
+    """Write a generated workbook: sheets maps each sheet name to its rows, the first row being the (bold) headings.
+    The file's dates are fixed, so the same rows always give the same file."""
+    wb = Workbook()
+    wb.remove(wb.active)
+    for name, rows in sheets.items():
+        ws = wb.create_sheet(name)
+        for r in rows:
+            ws.append(r)
+        for c in ws[1]:
+            c.font = c.font.copy(bold=True)
+    wb.properties.creator = wb.properties.lastModifiedBy = "HEARsay build"
+    buf = io.BytesIO()
+    wb.save(buf)
+    # openpyxl stamps the file with the time it was saved; rewrite it with fixed times
+    fixed = datetime.datetime(2026, 1, 1).isoformat() + "Z"
+    with zipfile.ZipFile(buf) as src, zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as out:
+        for item in src.infolist():
+            data = src.read(item.filename)
+            if item.filename == "docProps/core.xml":
+                data = re.sub(rb"(<dcterms:(created|modified)[^>]*>)[^<]*", lambda m: m.group(1) + fixed.encode(), data)
+            out.writestr(zipfile.ZipInfo(item.filename, (2026, 1, 1, 0, 0, 0)), data, zipfile.ZIP_DEFLATED)
 
 
 def _keyed(rows, key, sheet, errors):

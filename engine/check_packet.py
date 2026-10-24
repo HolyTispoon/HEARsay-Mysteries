@@ -4,7 +4,9 @@ Check that a scenario's packet (.docx) agrees with its Response Matrix (.xlsx).
 
     python3 check_packet.py "SCENARIO – Response Matrix.xlsx" "SCENARIO – Scenario Packet.docx"
 
-The game is built from the matrix, so the packet must say the same things. For every piece of text the game
+The build generates the matrix from the packet (scenario_packet.py), so most of this is a check that the packet was
+read right; what it adds is the packet's prose: every mention of the question budget, and the final-answer options.
+The packet is read as it says now: pending suggestions are left out until the author accepts them. For every piece of text the game
 uses (answers, Clues, Red Herrings, Major Clues, follow-ups, tripwires, the Hook, the endings, the final-answer
 options), this looks for the same words in the packet. It also checks each answer's item and receptiveness
 label ("Q1 [C02, clue; opinion receptive]"), the ranking order and the question budget. Curly and straight quotes
@@ -36,12 +38,15 @@ def norm(s):
     return " ".join(s.split())
 
 
-def packet_paragraphs(path):
-    """Every paragraph and table cell of the .docx, in order, as plain text."""
+def packet_paragraphs(path, accepted=False):
+    """Every paragraph and table cell of the .docx, in order, as plain text: with its pending suggestions as if
+    accepted, or with accepted=True as it says now (suggested insertions left out, suggested deletions kept)."""
     d = docx.Document(path)
     out = []
+    pending = lambda x: any(a.tag == qn("w:ins") for a in x.iterancestors())
     for el in d.element.body.iter(qn("w:p")):
-        t = "".join((x.text or "") if x.tag == qn("w:t") else " " for x in el.iter(qn("w:t"), qn("w:br"), qn("w:tab")))
+        t = "".join(("" if accepted and pending(x) else x.text or "") if x.tag == qn("w:t") else (x.text or "") if x.tag == qn("w:delText") else " "
+                    for x in el.iter(qn("w:t"), qn("w:br"), qn("w:tab"), *([qn("w:delText")] if accepted else [])))
         if t.strip():
             out.append(norm(t))
     return out
@@ -171,7 +176,7 @@ def check(matrix_path, packet_path, facts=None):
     s, errors = read_matrix(matrix_path, facts)
     if errors:
         return [f"The matrix itself has problems; fix those first ({len(errors)}, run scenario_matrix.py)"]
-    paras = packet_paragraphs(packet_path)
+    paras = packet_paragraphs(packet_path, accepted=True)
     full = "\n".join(paras)
     problems = []
     texts, patterns = expected(s)

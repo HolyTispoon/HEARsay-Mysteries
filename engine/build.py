@@ -5,32 +5,33 @@ Build HEARsay scenarios into playable Twine (SugarCube 2) games, and the site's 
     python3 engine/build.py [SCENARIO_ID ...] [--downloads FOLDER] [--no-packet-check] [--no-framework-check]
 
 With no Scenario ID it builds every scenario in scenarios/. Each scenario is a folder scenarios/<Scenario ID>/
-holding the copies of its Response Matrix (.xlsx) and Scenario Packet (.docx), sources.json (their Google
-addresses) and assets/ (the portraits and the campus map).
+holding the copy of its Scenario Packet (.docx), the Response Matrix (.xlsx) generated from it, sources.json (the
+packet's Google address) and assets/ (the portraits and the campus map).
 
-The sources of truth are Google Docs and Sheets in Drive that only the author edits (see sources.py):
-  - the framework Google Doc ("HEARsay mysteries"): the game's structure and rules, and in four of its tabs the
-    game's rules, HEAR guide, the framework's numbers and the sentences that restate the framework (game_text.py);
-  - the game text Google Sheet ("HEARsay game text"): the rest of the game's own text (headings, buttons, labels)
-    and the list of screens;
-  - each scenario's Response Matrix (Google Sheet): the scenario, checked against the framework's numbers;
-  - each scenario's packet (Google Doc): the scenario written up for people, checked against the matrix.
-The build reads the repository's copies of them (engine/HEARsay mysteries.docx for the framework).
+The sources of truth are Google Docs in Drive that only the author edits (see sources.py):
+  - the framework Google Doc ("HEARsay mysteries"): the game's structure and rules, and in five of its tabs the
+    game's own text (rules, HEAR guide, the sentences that restate the framework, headings, buttons and labels,
+    the list of screens) and the framework's numbers (game_text.py);
+  - each scenario's packet (Google Doc): the whole scenario (scenario_packet.py says what is read from it).
+The build reads the repository's copies of them, and the workbooks it generates from them: engine/HEARsay game
+text.xlsx from the framework, and each scenario's Response Matrix from its packet. Nobody edits a copy or a workbook.
 
 Steps:
-  0. With --downloads, a folder holding downloads of the Google files (Sheets as .xlsx, Docs as .docx, named as in
-     Drive): checks them all, then replaces each copy whose content differs. A download with problems stops the
-     build and nothing is copied. Copies with no download are used as they are, with a warning.
-  1. Reads the game text and the framework's numbers (the framework's tabs and the Sheet) and checks them against
-     the rest of the framework (check_framework.py).
+  0. With --downloads, a folder holding downloads of the Google Docs (as .docx, named as in Drive): checks them all,
+     then replaces each copy whose content differs. A download with problems stops the build and nothing is
+     copied. Copies with no download are used as they are, with a warning. Then regenerates each workbook whose
+     content would change.
+  1. Reads the game text and the framework's numbers and checks them against the rest of the framework
+     (check_framework.py).
   2. Checks that every text the engine asks for is in the game text workbook.
   3. For each scenario: reads the matrix and stops if it breaks a framework rule or disagrees with itself
-     (scenario_matrix.py), and checks that the packet says the same things as the matrix (check_packet.py).
+     (scenario_matrix.py), and checks the packet's prose against it (check_packet.py: the question budget, the
+     final-answer options).
   4. Writes docs/<Scenario ID>/source/story.twee (Twee 3), with the scenario and the game text written into the
      engine as `setup.scenario` and `setup.gameText`, and compiles it with Tweego into docs/<Scenario ID>/index.html.
      The newspaper article, if the packet has a 'Newspaper article' section, comes from the packet (packet_article),
      and is also printed to docs/<Scenario ID>/newspaper-article.pdf (article_pdf.py, with headless Chrome), with
-     the illustration named in the matrix's Settings and the section's caption and box.
+     the illustration the packet names and the section's caption and box.
   5. Copies the scenario's portraits, map, logo, masthead, Start image and newspaper illustration (if it has them), and the site icons (ICONS), into
      docs/<Scenario ID>/assets/; one of the optional images not in the scenario's assets/ is looked for in SHARED_ASSETS;
      head.html links the icons from the page's <head>.
@@ -54,7 +55,7 @@ sys.path.insert(0, HERE)
 from scenario_matrix import read_matrix, PASSAGE_PARTS
 from check_packet import check as check_packet, norm, packet_article, ARTICLE_SECTION
 from game_text import read_game_text, DEFAULT as GAME_TEXT, FRAMEWORK
-from sources import update_copies
+from sources import update_copies, packet_copy, matrix_path
 from check_framework import check as check_framework
 from article_pdf import write_pdf, PDF_NAME
 
@@ -105,20 +106,12 @@ def check_engine_keys(g):
         print("Note: the game text workbook has text the engine never shows: " + ", ".join(unused))
 
 
-def load(matrix_path, facts):
-    d, errors = read_matrix(matrix_path, facts)
+def load(path, facts):
+    d, errors = read_matrix(path, facts)
     if errors:
         sys.exit("The matrix has problems; fix them before building:\n" + "\n".join(" - " + e for e in errors))
     print(f"Matrix OK: {len(d.WITNESSES)} witnesses, {len(d.CLUES)} clues, {len(d.RED_HERRINGS)} red herrings, budget {d.QUESTION_BUDGET}")
     return d
-
-
-def find_packet(matrix_path):
-    found = [p for p in glob.glob(os.path.join(os.path.dirname(os.path.abspath(matrix_path)), "*.docx"))
-             if "packet" in os.path.basename(p).lower() and not os.path.basename(p).startswith("~$")]
-    if len(found) != 1:
-        sys.exit(f"Expected one packet .docx next to the matrix, found {len(found)}. The build reads the packet even with --no-packet-check, for its newspaper article.")
-    return found[0]
 
 
 def article_json(d, article):
@@ -200,14 +193,11 @@ def copy(src, dst):
 
 
 def scenario_files(sid):
-    """The matrix and the scenario folder of a Scenario ID."""
+    """The matrix (generated from the packet) and the scenario folder of a Scenario ID."""
     folder = os.path.join(SCENARIOS, sid)
     if not os.path.isdir(folder):
         sys.exit(f"No scenario folder {os.path.relpath(folder, ROOT)}. Scenarios: {', '.join(all_scenarios()) or 'none'}")
-    found = [p for p in glob.glob(os.path.join(folder, "*.xlsx")) if not os.path.basename(p).startswith("~$")]
-    if len(found) != 1:
-        sys.exit(f"Expected one Response Matrix .xlsx in {os.path.relpath(folder, ROOT)}, found {len(found)}")
-    return found[0], folder
+    return matrix_path(sid), folder
 
 
 def all_scenarios():
@@ -219,23 +209,23 @@ def build_scenario(sid, g, no_packet_check):
     print(f"\n== {sid}")
     d = load(matrix, g.facts)
     if d.SCENARIO_ID != sid:
-        sys.exit(f"The matrix's Scenario ID is '{d.SCENARIO_ID}', but its folder is scenarios/{sid}/. Make them the same.")
-    packet = find_packet(matrix)
+        sys.exit(f"The packet's Scenario ID is '{d.SCENARIO_ID}', but its folder is scenarios/{sid}/. Make them the same.")
+    packet = packet_copy(sid)
     if no_packet_check:
         print("Skipping the packet check (--no-packet-check).")
     else:
         problems = check_packet(matrix, packet)
         if problems:
-            sys.exit(f"The packet ({os.path.basename(packet)}) disagrees with the matrix; make them match before building:\n"
+            sys.exit(f"The packet ({os.path.basename(packet)}) disagrees with the matrix generated from it:\n"
                      + "\n".join(" - " + p for p in problems))
-        print(f"Packet OK: {os.path.basename(packet)} matches the matrix")
+        print(f"Packet OK: {os.path.basename(packet)}")
     article, problems = packet_article(packet)
     if problems:
         sys.exit(f"The packet's newspaper article can't be read:\n" + "\n".join(" - " + p for p in problems))
     # the masthead only heads the article, so a scenario that names one must have an article
     if d.MASTHEAD and not article:
-        sys.exit(f"The matrix names a masthead ({d.MASTHEAD}) but no newspaper article was found in the packet "
-                 f"({os.path.basename(packet)}). Check its '{ARTICLE_SECTION}' section, or remove the Masthead setting.")
+        sys.exit(f"The packet names a masthead ({d.MASTHEAD}) but no newspaper article was found in it "
+                 f"({os.path.basename(packet)}). Check its '{ARTICLE_SECTION}' section, or remove its 'Masthead file:'.")
     print(f"Newspaper article: {article['headline']}" if article else "No newspaper article in the packet")
 
     out = os.path.join(DOCS, sid)
@@ -333,10 +323,10 @@ def summary(sid):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("scenarios", nargs="*", metavar="SCENARIO_ID", help="the scenarios to build (default: all of them)")
-    ap.add_argument("--no-packet-check", action="store_true", help="build without checking the packets against the matrices")
+    ap.add_argument("--no-packet-check", action="store_true", help="build without checking the packets' prose against the matrices")
     ap.add_argument("--no-framework-check", action="store_true", help="build without checking the game text against the framework")
-    ap.add_argument("--downloads", metavar="FOLDER", help="a folder of downloads of the Google Sheets (.xlsx) and Docs "
-                                                          "(.docx); each replaces its copy when the content differs")
+    ap.add_argument("--downloads", metavar="FOLDER", help="a folder of downloads of the Google Docs (.docx); each "
+                                                          "replaces its copy when the content differs")
     a = ap.parse_args()
 
     ids = a.scenarios or all_scenarios()
