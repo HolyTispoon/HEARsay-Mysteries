@@ -83,7 +83,7 @@ The build is deterministic: rebuilding the game in a cloud session, with Tweego 
 ```
 HEARsay mystery game/
   HEARsay mysteries               the framework Google Doc (Author only)
-  The Commons' Comma/             the scenario's Scenario Packet (Google Doc)
+  The Commons' Comma – Scenario Packet   the scenario's packet (Google Doc), one per scenario
   CLAUDE.md                       Drive notes; points to the repository for everything in it
   Section 5 draft – ….md
   HEARsay-Mysteries/              the git clone: engine/, scenarios/, docs/
