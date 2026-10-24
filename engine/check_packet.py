@@ -40,11 +40,15 @@ def norm(s):
 
 def packet_paragraphs(path, accepted=False):
     """Every paragraph and table cell of the .docx, in order, as plain text: with its pending suggestions as if
-    accepted, or with accepted=True as it says now (suggested insertions left out, suggested deletions kept)."""
+    accepted, or with accepted=True as it says now (suggested insertions left out, suggested deletions kept).
+    A tab's name is left out: the Drive connector's export starts each tab with a Title paragraph holding the name,
+    in a section of its own, and a browser download has none, so the two downloads of one Doc read the same."""
     d = docx.Document(path)
     out = []
     pending = lambda x: any(a.tag == qn("w:ins") for a in x.iterancestors())
     for el in d.element.body.iter(qn("w:p")):
+        if el.pPr is not None and el.pPr.find(qn("w:sectPr")) is not None and el.style == "Title":
+            continue
         t = "".join(("" if accepted and pending(x) else x.text or "") if x.tag == qn("w:t") else (x.text or "") if x.tag == qn("w:delText") else " "
                     for x in el.iter(qn("w:t"), qn("w:br"), qn("w:tab"), *([qn("w:delText")] if accepted else [])))
         if t.strip():
