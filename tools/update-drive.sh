@@ -9,7 +9,7 @@
 #
 # What it changes: only files inside this repository folder (HEARsay-Mysteries/) that git tracks, and only to
 # make them match main on GitHub. It lists every file it would add, change or delete, and the commits behind
-# them, before it touches anything. Files outside the repository folder (the Google Doc, the Sheet, Archive/,
+# them, before it touches anything. Files outside the repository folder (the Google Docs, Archive/,
 # the old Drive folders) and files git doesn't track are never touched. It never pushes anything to GitHub.
 #
 # Without --yes it refuses, and changes nothing, when the clone is not on main, when a tracked file has been

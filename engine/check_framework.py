@@ -6,12 +6,12 @@ Check the game text against the framework Google Doc ("HEARsay mysteries").
 
 The Google Doc is the source of truth for the game's structure and rules. Its 'Rules of the game', 'HEAR
 Framework introduction', 'Game facts' and 'Game text' tabs hold some of the game text and the framework's numbers
-(see game_text.py); the rest of the game text is in the Sheet. The build uses the repository's copy,
+(see game_text.py), and its 'Screens and labels' tab the rest of the game text. The build uses the repository's copy,
 engine/HEARsay mysteries.docx, and by default so does this script; another .docx export can be passed instead.
 
 Checks:
   - every passage the framework lists (section 4, "Passages text: …") has a screen in the game, and every
-    framework name on the Passages sheet appears in the framework;
+    framework name in the table of screens appears in the framework;
   - every framework section the workbook cites exists;
   - rows marked verbatim appear word for word (and case for case) in the framework;
   - every fact's framework wording appears in the framework (outside the 'Game facts' and 'Game text' tabs) and
@@ -22,7 +22,7 @@ choices the framework does not describe yet.
 import os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from game_text import read_game_text, framework_blocks, DEFAULT, FRAMEWORK, FACTS_TAB, TEXT_TAB
+from game_text import read_game_text, framework_blocks, DEFAULT, FRAMEWORK, FACTS_TAB, TEXT_TAB, SCREENS_TAB
 
 NUMBER_WORDS = {"once": 1, "one": 1, "two": 2, "twice": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
                 "eight": 8, "nine": 9, "ten": 10, "sixteen": 16, "twenty": 20, "forty": 40, "half": 0.5}
@@ -41,7 +41,7 @@ def framework_text(path):
         sys.exit(f"Can't read {path}: export the framework as .docx")
     parts = []
     for tab, style, content in framework_blocks(path):
-        if tab in (FACTS_TAB, TEXT_TAB):
+        if tab in (FACTS_TAB, TEXT_TAB, SCREENS_TAB):
             continue
         cells = [c for row in content for c in row] if style == "Table" else [content]
         parts += [c.replace("**", "") for c in cells]
@@ -86,7 +86,7 @@ def check(game_text_path, export_path=FRAMEWORK):
         listed = []
     for n in listed:
         if n.lower() not in names:
-            problems.append(f"Passages: the framework lists the passage '{n}', but no screen on the Passages sheet has that framework name")
+            problems.append(f"Passages: the framework lists the passage '{n}', but no screen in the table of screens has that framework name")
     for p in g.passages:
         fn = p["Framework name"]
         if not fn:

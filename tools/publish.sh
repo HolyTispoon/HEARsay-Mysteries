@@ -8,8 +8,8 @@
 # What it does, in order (it stops at the first problem and publishes nothing):
 #   1. The first time only: installs Tweego 2.1.1, SugarCube 2.37.3 and the Python packages the build needs into
 #      ~/.cache/hearsay-build-tools (checked against their published checksums). Nothing else on the Mac changes.
-#   2. Opens each Google file's download link in your browser (the framework Doc, the game text Sheet, and each
-#      scenario's matrix and packet), waits for the downloads to land in ~/Downloads, and moves them into a new
+#   2. Opens each Google Doc's download link in your browser (the framework Doc and each scenario's packet), waits
+#      for the downloads to land in ~/Downloads, and moves them into a new
 #      folder in ~/.cache/hearsay-publish/downloads.
 #   3. Builds in its own copy of the repository (~/.cache/hearsay-publish/HEARsay-Mysteries, reset to GitHub's main
 #      each run), never in the Drive clone. The build runs every check and stops if one fails. If this script is

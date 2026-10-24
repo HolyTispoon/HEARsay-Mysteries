@@ -13,15 +13,15 @@ The goal: one copy of every file, in one git repository, which is also the Drive
 ```
 engine/                         the same for every scenario (unchanged contents)
   hearsay_engine.twee
-  HEARsay game text.xlsx
+  HEARsay game text.xlsx        generated from the framework Doc by the build
   build.py                      builds one scenario, or all of them, plus the landing page
   landing.html                  the landing page, with a placeholder for the list of scenarios
-  scenario_matrix.py, check_packet.py, game_text.py, check_framework.py
+  scenario_packet.py, scenario_matrix.py, check_packet.py, game_text.py, check_framework.py
   head.html, favicon.svg, favicon-32.png, apple-touch-icon.png
   shared-assets/                images more than one scenario may use (Blank University's logo, The Blank's masthead)
 scenarios/
   commons-comma/                folder name = the matrix's Scenario ID
-    The Commons' Comma – Response Matrix.xlsx
+    The Commons' Comma – Response Matrix.xlsx   generated from the packet by the build
     The Commons' Comma – Scenario Packet.docx
     assets/                     game-ready images: portraits/, campus-map.jpg
   <next-scenario>/
@@ -83,20 +83,19 @@ The build is deterministic: rebuilding the game in a cloud session, with Tweego 
 ```
 HEARsay mystery game/
   HEARsay mysteries               the framework Google Doc (Author only)
-  HEARsay game text               the game text Google Sheet
-  The Commons' Comma/             the scenario's Response Matrix (Google Sheet) and Scenario Packet (Google Doc)
+  The Commons' Comma/             the scenario's Scenario Packet (Google Doc)
   CLAUDE.md                       Drive notes; points to the repository for everything in it
   Section 5 draft – ….md
   HEARsay-Mysteries/              the git clone: engine/, scenarios/, docs/
   Archive/                        gains Twine engine/, the old The Commons' Comma/ folder, Claude outputs/
 ```
 
-- The sources of truth are the Google Docs and Sheets, outside the repository, and the author edits them, or asks Claude to make a specific change (as suggestions in the Docs, decided 2026-10-21): the framework Doc, the game text Sheet, and each scenario's matrix (Sheet) and packet (Doc) in the scenario's Drive folder. The repository keeps read-only copies of the framework Doc, the Sheets and the packets, which the build reads (since 2026-10-21 the game's rules, HEAR guide, the framework's numbers and the sentences that restate the framework come from four tabs of the framework Doc rather than the Sheet); `engine/sources.json` and `scenarios/<id>/sources.json` record where the originals are.
+- The sources of truth are two kinds of Google Doc, outside the repository, and the author edits them, or asks Claude to make a specific change (as suggestions, decided 2026-10-21): the framework Doc, and each scenario's packet in the scenario's Drive folder. The repository keeps read-only copies of them, which the build reads, and generates two workbooks from them on every build: `engine/HEARsay game text.xlsx` from the framework's tabs (since 2026-10-21 the game's rules, HEAR guide, the framework's numbers and the sentences that restate the framework; since 2026-10-24 also the screens and labels) and each scenario's Response Matrix from its packet. `engine/sources.json` and `scenarios/<id>/sources.json` record where the Docs are.
 - On the Mac, Google Drive for desktop syncs the clone, with the folder set to "Available offline" so git works on local files.
 - Changes merged on GitHub (including Claude's) reach Drive when you run `bash tools/update-drive.sh` on the Mac. It fetches `main`, lists the commits and every file it would add, change or delete, and updates only after you confirm (`--check` only lists). It only touches files git tracks inside `HEARsay-Mysteries/`, never pushes, and refuses without changing anything if the clone isn't on `main`, has uncommitted edits to tracked files, or has commits GitHub doesn't. `publish.sh` runs it as `update-drive.sh --yes`, which asks nothing and resets the clone to `main` instead of refusing (switching to `main`, dropping local edits and commits to tracked files, after listing them), so a publish always leaves the Drive clone matching `main` (the author's choice, 2026-10-21). (Until 2026-10-21 a launchd job pulled every 10 minutes; the author decided against it, and `setup-drive-clone.sh` now removes it.)
 - Your edits reach GitHub when you commit and push them (GitHub Desktop: one commit, one push). Nothing pushes automatically.
 - A scenario's images live only in the repository, in `scenarios/<id>/assets/`; the build takes them from there and nowhere else. Original artwork the game doesn't use (such as the contact sheet the portraits were cut from) is in Drive `Archive/`, not in the repository.
-- Updating the copies: download the Google files into one folder and build with `--downloads <folder>`. The build checks all the downloads first (game text, matrix rules, packet against matrix) and copies nothing if one has a problem; then it replaces each copy whose content differs. The changed copies are committed with the rebuilt `docs/`, so every change to the text shows in a pull request. The build can't download the files itself (it has no Google credentials): in a Claude session the Drive connector exports them; on the Mac, File → Download.
+- Updating the copies: download the Google Docs into one folder and build with `--downloads <folder>`. The build checks all the downloads first (game text, the packet's structure, matrix rules, the packet's prose) and copies nothing if one has a problem; then it replaces each copy whose content differs and regenerates the workbooks. The changed copies and workbooks are committed with the rebuilt `docs/`, so every change to the text shows in a pull request. The build can't download the files itself (it has no Google credentials): in a Claude session the Drive connector exports them; on the Mac, `publish.sh` opens their download links in the browser.
 
 ## Migration, in order
 
@@ -112,3 +111,7 @@ HEARsay mystery game/
 2. The landing page carries the project's introduction as well as the list of scenarios.
 3. The site folder is `docs/`, served directly by GitHub Pages.
 4. Source art is kept in the repository, in `scenarios/<id>/source-art/`. Changed 2026-10-21: it isn't; `scenarios/<id>/assets/` is the one place for a scenario's images, and originals the game doesn't use go to Drive `Archive/`.
+
+## Decision (2026-10-24): one Doc per scenario, and one for the engine
+
+The author wanted one document to edit per scenario. The packet already held nearly everything in the matrix, so the packet became the scenario's source and the matrix is generated from it on every build (`engine/scenario_packet.py`). The game text Sheet moved into the framework Doc's new "Screens and labels" tab, and the game text workbook is generated from the Doc. The two Google Sheets are no longer read; the author archives them. The packet gained what only the matrix had: the IFID, "(correct)" on the final-answer form, the two final-answer questions as its column headings, and "Map file:". The Play URL setting was dropped (the build never used it). Text now reaches the game as the packet writes it, so the game shows the packet's curly apostrophes; SugarCube's save slot comes from the title with punctuation removed, so saves are unaffected.

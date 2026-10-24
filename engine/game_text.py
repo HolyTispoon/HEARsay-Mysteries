@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Read the game's own text and the framework's numbers from the framework's 'HEARsay mysteries.docx' and from
-'HEARsay game text.xlsx'.
+Read the game's own text and the framework's numbers from the framework's 'HEARsay mysteries.docx'.
 
     python3 game_text.py ["HEARsay game text.xlsx" ["HEARsay mysteries.docx"]]
 
-The sources of truth are the framework Google Doc "HEARsay mysteries" and the Google Sheet "HEARsay game text"
-(their addresses are in sources.json). The .docx and .xlsx next to this script are the repository's copies of
-them, which only the build updates (see sources.py).
+The source of truth is the framework Google Doc "HEARsay mysteries" (its address is in sources.json). The .docx next
+to this script is the repository's copy of it, which only the build updates (see sources.py), and the .xlsx is
+generated from it by the build (framework_workbook()); nobody edits either.
 
 The framework Doc's tabs (each exported as a Title paragraph with the tab's name, up to the next tab):
   - 'Rules of the game': a heading (rules.title), then one paragraph per rule (rules.1, rules.2, …);
@@ -16,10 +15,11 @@ The framework Doc's tabs (each exported as a Title paragraph with the tab's name
   - 'Game facts': a table with the columns Key, Fact, Value, Framework wording and Framework section, one row per
     number of the framework (check_framework.py checks the wording against the rest of the Doc);
   - 'Game text': a table with the columns Key, Screen, Text and Placeholders, for the game's sentences that
-    restate the framework.
-Bold words in the Doc become **double asterisks**, which the game shows in bold.
-The Sheet holds the rest of the game's text (headings, buttons, labels) on its Text sheet, and the list of screens
-on its Passages sheet. A key may come from only one of them, and the Sheet's old Facts sheet must be gone or empty.
+    restate the framework;
+  - 'Screens and labels': a table of the game's screens (Engine passage, Framework name, Framework section, Notes)
+    and a table of the rest of the game's text, its headings, buttons and labels (Key, Engine passage, Text,
+    Framework section, Check, Placeholders). The build writes them to the workbook's Passages and Text sheets.
+Bold words in the Doc become **double asterisks**, which the game shows in bold. Pending suggestions are not read.
 
 read_game_text() returns (game_text, errors). game_text.text maps each key to its text, game_text.facts maps each
 fact key to its value, and game_text.rows / .passages / .fact_rows keep the rows for check_framework.py.
@@ -36,13 +36,19 @@ try:
 except ImportError:
     sys.exit("This needs openpyxl: pip3 install openpyxl")
 
-DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HEARsay game text.xlsx")  # the copy of the Google Sheet
+DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HEARsay game text.xlsx")  # generated from the framework Doc
 FRAMEWORK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HEARsay mysteries.docx")  # the copy of the Google Doc
 # The framework tabs the game reads
 RULES_TAB, HEAR_TAB, FACTS_TAB, TEXT_TAB = "Rules of the game", "HEAR Framework introduction", "Game facts", "Game text"
+SCREENS_TAB = "Screens and labels"
 FACT_COLUMNS = ["Key", "Fact", "Value", "Framework wording", "Framework section"]
 TEXT_COLUMNS = ["Key", "Screen", "Text", "Placeholders"]
-# Keys that come from the rules and HEAR tabs, so not from the Sheet
+# The 'Screens and labels' tab's two tables, which become the workbook's Passages and Text sheets
+SCREEN_COLUMNS = ["Engine passage", "Framework name", "Framework section", "Notes"]
+LABEL_COLUMNS = ["Key", "Engine passage", "Text", "Framework section", "Check", "Placeholders"]
+WORKBOOK_README = ("Generated from the framework Google Doc 'HEARsay mysteries' (its 'Screens and labels' tab) by the "
+                   "build; don't edit it. Change the Doc and rebuild. game_text.py says how the build reads the Doc.")
+# Keys that come from the rules and HEAR tabs, so not from the labels table
 DOC_KEYS = re.compile(r"^(rules\.(title|\d+)|hear\.(title|intro|unreceptive|[HEAR]\.(move|text)))$")
 # Placeholders every text can use; the engine fills them from the scenario and the facts.
 GLOBAL_PLACEHOLDERS = {"budget", "n_witnesses", "n_questions", "n_major", "rank_exact", "rank_near", "ccc", "title"}
@@ -94,7 +100,7 @@ def framework_blocks(path):
             blocks.append((tab, "Table", rows))
             sections.append((section, False))
     named = {b[0] for b in blocks}
-    for name in (RULES_TAB, HEAR_TAB, FACTS_TAB, TEXT_TAB):
+    for name in (RULES_TAB, HEAR_TAB, FACTS_TAB, TEXT_TAB, SCREENS_TAB):
         if name in named:
             continue
         by_section = {}
@@ -119,6 +125,8 @@ def _shape_tab(blocks, listed):
                 return FACTS_TAB
             if head[:len(TEXT_COLUMNS)] == TEXT_COLUMNS:
                 return TEXT_TAB
+            if head[:len(SCREEN_COLUMNS)] == SCREEN_COLUMNS or head[:len(LABEL_COLUMNS)] == LABEL_COLUMNS:
+                return SCREENS_TAB
     if "Table" in styles:
         return None
     if heading == [True, False] + [True, False] * 4 + [False] and \
@@ -189,12 +197,31 @@ def framework_text(path, engine_passages):
         if k in text or DOC_KEYS.match(k):
             errors.append(f"{where}: key appears twice in the framework"); continue
         if r["Screen"] not in engine_passages:
-            errors.append(f"{where}: screen {r['Screen']!r} is not on the Sheet's Passages sheet")
+            errors.append(f"{where}: screen {r['Screen']!r} is not in the '{SCREENS_TAB}' tab's table of screens")
         _placeholders(where, r["Text"], GLOBAL_PLACEHOLDERS | set(r["Placeholders"].replace(",", " ").split()), errors)
         text[k] = r["Text"]
 
     fact_rows = _table(blocks, FACTS_TAB, FACT_COLUMNS, errors)
     return text, fact_rows, errors
+
+
+def framework_workbook(framework):
+    """The game text workbook's sheets from the framework's 'Screens and labels' tab: (sheets, errors)."""
+    if not os.path.exists(framework):
+        return {}, [f"No copy of the framework Doc ({os.path.basename(framework)})"]
+    tables = [rows for _, style, rows in framework_blocks(framework) if style == "Table" and rows]
+    sheets, errors = {"Read me": [["Sheet", "What it holds"], ["", WORKBOOK_README]]}, []
+    for name, columns, what in (("Passages", SCREEN_COLUMNS, "screens"), ("Text", LABEL_COLUMNS, "labels")):
+        found = [t for t in tables if [h.replace("*", "").strip() for h in t[0]] == columns]
+        if len(found) != 1:
+            errors.append(f"The framework needs one table of {what} (in its '{SCREENS_TAB}' tab) with the columns "
+                          f"{', '.join(columns)}; found {len(found)}")
+            continue
+        text = columns.index("Text") if "Text" in columns else None
+        # only the Text column can be bold; elsewhere a bold cell is just formatting
+        sheets[name] = [columns] + [[c if i == text else c.replace("*", "").strip() for i, c in enumerate(r[:len(columns)])]
+                                    for r in found[0][1:] if any(x.strip() for x in r)]
+    return sheets, errors
 
 
 def read_game_text(path=DEFAULT, framework=FRAMEWORK):
@@ -207,13 +234,13 @@ def read_game_text(path=DEFAULT, framework=FRAMEWORK):
     rows = _sheet(wb, "Text", ["Key", "Engine passage", "Text", "Framework section", "Check", "Placeholders"], errors)
     text = {}
     for r in rows:
-        k, where = r["Key"], f"Text row {r['_row']} ({r['Key'] or 'no key'})"
+        k, where = r["Key"], f"Labels table row {r['_row']} ({r['Key'] or 'no key'})"
         if not k:
-            errors.append(f"Text row {r['_row']}: Key is blank"); continue
+            errors.append(f"Labels table row {r['_row']}: Key is blank"); continue
         if k in text:
             errors.append(f"{where}: key appears twice"); continue
         if r["Engine passage"] not in engine_passages:
-            errors.append(f"{where}: engine passage {r['Engine passage']!r} is not on the Passages sheet")
+            errors.append(f"{where}: engine passage {r['Engine passage']!r} is not in the table of screens")
         check = r["Check"].lower()
         if check not in CHECKS:
             errors.append(f"{where}: Check must be verbatim, paraphrase or label, not {r['Check']!r}")
@@ -228,12 +255,8 @@ def read_game_text(path=DEFAULT, framework=FRAMEWORK):
     errors += doc_errors
     for r in rows:
         if r["Key"] in doc_text or DOC_KEYS.match(r["Key"]):
-            errors.append(f"Text row {r['_row']} ({r['Key']}): this text now comes from the framework Doc; delete the row")
+            errors.append(f"Labels table row {r['_row']} ({r['Key']}): this text comes from another tab of the framework; delete the row")
     text.update(doc_text)
-    if "Facts" in wb.sheetnames and any(v not in (None, "") for row in wb["Facts"].iter_rows(min_row=2, values_only=True) for v in row):
-        errors.append(f"The Sheet's Facts sheet: the facts now come from the framework Doc's '{FACTS_TAB}' tab; "
-                      "delete the sheet")
-
     fact_rows = _keyed(doc_facts, "Key", f"The framework's '{FACTS_TAB}'", errors)
     facts = {}
     for k, r in fact_rows.items():
